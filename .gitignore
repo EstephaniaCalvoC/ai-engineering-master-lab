@@ -1,0 +1,33 @@
+# Secrets: never commit these
+.env
+.env.*
+!.env.example
+!.env.examples
+.streamlit/secrets.toml
+
+# Tutor reports: local, personal study notes (see AGENTS.md, "Reports").
+# To keep one in Git on purpose: git add -f reports/<file>.md
+reports/*
+!reports/.gitkeep
+
+# Read-only cache of the LIDR repo, used by the skills. Safe to delete.
+.lab-cache/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node / OS / editors
+node_modules/
+.DS_Store
+.idea/
+.vscode/
+
+# Personal agent settings
+.claude/settings.local.json
+CLAUDE.local.md

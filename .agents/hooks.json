@@ -1,0 +1,12 @@
+{
+  "block-env": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "command": "bash \"$(git rev-parse --show-toplevel)/.agents/hooks/block-env.sh\" antigravity" }
+        ]
+      }
+    ]
+  }
+}
