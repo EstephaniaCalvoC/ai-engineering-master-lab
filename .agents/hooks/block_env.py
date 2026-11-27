@@ -3,7 +3,7 @@
 Reads the hook payload (JSON) on stdin. It understands the payload shapes of
 several agents by looking only at the fields that hold a path or a shell command.
 
-This is a guardrail against accidents, not a sandbox: see README, ".env protection".
+This is a guardrail against accidents, not a sandbox: see manuals/agent-setup.md.
 """
 
 import fnmatch

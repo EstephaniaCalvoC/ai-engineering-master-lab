@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "session": "03",
+  "created_at": "2026-01-01 10:00",
+  "exercise_path": "s03_exercise.txt",
+  "items": [
+    {
+      "id": "R01",
+      "kind": "checklist",
+      "item": "The main endpoint the exercise asks for answers a valid request",
+      "type": "Mandatory requirement",
+      "criteria": "The route exists under the documented prefix and returns the response schema for a valid body",
+      "validation": "Test"
+    },
+    {
+      "id": "R02",
+      "kind": "checklist",
+      "item": "Empty or refused model replies are detected and reported with the real cause",
+      "type": "Functionality",
+      "criteria": "A test sends an empty or refused reply and checks that a clear error with the real cause is raised",
+      "validation": "Test"
+    },
+    {
+      "id": "R03",
+      "kind": "checklist",
+      "item": "Secrets come from configuration, never from code",
+      "type": "Security",
+      "criteria": "No keys in source; the real config file is listed in .gitignore",
+      "validation": "Code"
+    },
+    {
+      "id": "R04",
+      "kind": "checklist",
+      "item": "Business logic is separate from the interface layer",
+      "type": "Architecture and design",
+      "criteria": "Route handlers do not call the model SDK directly",
+      "validation": "Code"
+    },
+    {
+      "id": "R05",
+      "kind": "checklist",
+      "item": "Main behavior: a valid request produces the result the exercise asks for",
+      "type": "Functionality",
+      "criteria": "A real request returns a model result in the format the exercise asks for",
+      "validation": "Test"
+    },
+    {
+      "id": "R06",
+      "kind": "optional",
+      "item": "Optional: streaming responses",
+      "type": null,
+      "criteria": "Listed, never penalized",
+      "validation": null
+    },
+    {
+      "id": "R07",
+      "kind": "deferred",
+      "item": "Deferred to the live session: prompt tuning and model parameters",
+      "type": null,
+      "criteria": "Not evaluated",
+      "validation": null
+    }
+  ]
+}

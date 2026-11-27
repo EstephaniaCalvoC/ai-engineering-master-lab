@@ -7,8 +7,7 @@
 
 # Tutor reports: local, personal study notes (see AGENTS.md, "Reports").
 # To keep one in Git on purpose: git add -f reports/<file>.md
-reports/*
-!reports/.gitkeep
+reports/
 
 # Read-only cache of the LIDR repo, used by the skills. Safe to delete.
 .lab-cache/
@@ -28,6 +27,13 @@ node_modules/
 .idea/
 .vscode/
 
+# Local agent setup (see manuals/agent-setup.md). Root only.
+# .agents/hooks/ is tracked: its scripts are shared by every agent.
+/.claude/
+/.codex/
+/.cursor/
+/.gemini/
+/.agents/hooks.json
+
 # Personal agent settings
-.claude/settings.local.json
 CLAUDE.local.md

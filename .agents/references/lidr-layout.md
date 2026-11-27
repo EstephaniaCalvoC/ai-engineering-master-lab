@@ -56,7 +56,7 @@ Even in a `split` session, check the pre-session solution against the exercise's
 
 ## Comparing with the student's code
 
-The student's repo and LIDR's have **unrelated histories and different paths**. LIDR keeps the Python app in `estimator/` (later `ai-service/`) and adds other apps in later sessions (`estimator-web/`, `business-backend/`). So don't `git diff` across the two. Read both sides and match files by responsibility (endpoint ↔ endpoint, LLM service ↔ LLM service).
+The student's repo and LIDR's have **unrelated histories and different paths**. LIDR keeps the Python app in `estimator/` (later `ai-service/`) and adds other apps in later sessions (`estimator-web/`, `business-backend/`). A student branch started from LIDR normally has that code moved into `project/`. So don't `git diff` across the two. Read both sides and match files by responsibility (endpoint ↔ endpoint, LLM service ↔ LLM service).
 
 ## Safety
 

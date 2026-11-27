@@ -35,12 +35,12 @@ If `LIVE_REF` is empty, say that LIDR has no live branch for this session and st
 
 **Has the live session happened?** A branch on LIDR doesn't mean this cohort has had that class: some branches predate it and may still change. As of 2026-11-25, only the live sessions for sessions 1 and 2 had taken place. For a later session, tell the student the branch's `REF_DATE` and ask whether their class has happened. If it hasn't, say that comparing now may reveal the live solution early; continue only if they want to, and label the report preliminary. Don't tell the student that LIDR's branches are irregular or wrong.
 
-If `lab.sh upstream` printed `STARTED_FROM_LIDR=<branch> <sha>`, the branch was started from LIDR's code. Inherited code counts as present, but label it as inherited; the student's own work is `git diff <sha> <student-branch>`.
+If `lab.sh upstream` printed `STARTED_FROM_LIDR=<branch> <sha>`, the branch was started from LIDR's code. Inherited code counts as present, but label it as inherited; the student's own work is `git diff -M -C <sha> <student-branch>`, without limiting it to paths, so moves are detected. A file only moved into `project/` (`R100`, or `C100` when a lab file took its old path) is still inherited.
 
 ## 3. Compare and analyze
 
 1. Use the layout table to work out **what the live session changed**. Read the actual diffs and the commit log, plus any session notes or README changes on `LIVE_REF`.
-2. Read the student's code with `git ls-tree` and `git show <student-branch>:<path>`. Don't check anything out. Never open or print `.env` or secret files. A hook blocks `.env` access: don't work around it.
+2. The student's work is in `project/` and `.github/` (see "Branching" in `AGENTS.md`). Older branches may keep it elsewhere: find it and say where. If other new or changed files might be theirs, ask. Read the student's code with `git ls-tree` and `git show <student-branch>:<path>`. Don't check anything out. Never open or print `.env` or secret files. A hook blocks `.env` access: don't work around it.
 3. For each live-session change, decide whether the student already has it (possibly in another form), has part of it, or lacks it. Equivalent solutions are not gaps. Credit what they did ahead of time, or did better.
 4. Also note anything missing from earlier sessions that this live work depends on, labelled as carried over.
 5. Group related changes into gaps with IDs `G1`, `G2`, … in one of three categories:
@@ -67,8 +67,8 @@ After confirmation:
 1. **Check the tree.** If `git status --porcelain` isn't empty, ask the student to commit or stash. Don't stash, reset or discard anything yourself.
 2. **Check the branch.** If `refine/session_XX` exists, ask whether to continue on it or use another name such as `refine/session_XX_2`. Never reset or delete it.
 3. **Create it** from the compared commit: `git switch -c refine/session_XX <student-branch>`.
-4. **Apply the selected gaps** one at a time. Adapt them to the student's structure and naming; don't copy LIDR's tree over it. Keep their provider choice. Never add real keys; add new variables to `.env.example` with empty values. Ask before installing dependencies, starting services or making calls that cost API credits.
-5. **Verify** what you can (existing tests, import check, the exercise checklist), and say what you couldn't verify.
+4. **Apply the selected gaps** one at a time. Adapt them to the student's structure and naming; don't copy LIDR's tree over it. Keep new code inside `project/` (except `.github/`), unless the branch keeps its project elsewhere; don't move it. Keep their provider choice. Never add real keys; add new variables to `.env.example` with empty values. Ask before installing dependencies, starting services or making calls that cost API credits.
+5. **Verify** what you can (existing tests, import check, the exercise checklist), and say what you couldn't verify. Run only tests whose command is documented in the project (README, manifest or scripts); if none is documented, don't try one: mark those checks Not Verified and ask the student. A failing test is reported as it is and not retried; search for its root cause in the code.
 6. **Show the result:** summary by gap ID, `git diff --stat`, and anything skipped. Ask before committing. Don't push or merge.
 
 `session_XX` stays exactly as submitted. Tell the student they are now on the refine branch, and how to compare: `git diff session_XX refine/session_XX` (after committing).
