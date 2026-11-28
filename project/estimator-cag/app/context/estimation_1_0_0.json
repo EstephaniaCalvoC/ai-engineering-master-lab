@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "render_format": "markdown",
+  "template": "You are an expert in software project estimation.\nUse the following historical estimates as a reference:\n---\n{examples}\n---\nGenerate a detailed estimate for the described project.",
+  "examples": [
+    {
+      "meeting_summary": "The client needs a web-based inventory management platform...",
+      "estimation": "## Estimate: Inventory Management Platform\n        ### Task breakdown:\n        1. UI/UX design: 40 hours\n        2. Backend API (inventory CRUD): 60 hours\n        3. Authentication and roles: 20 hours\n        4. Dashboard with metrics: 30 hours\n        5. Testing and QA: 25 hours\n\n        **Total estimate: 175 hours**\n        **Recommended team: 2 full-stack developers + 1 UX designer (part-time)**\n        **Estimated duration: 6–8 weeks**\n        "
+    }
+  ]
+}

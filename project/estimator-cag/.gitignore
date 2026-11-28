@@ -1,0 +1,8 @@
+# Environment
+.env
+tests/integration/.env.integration
+
+# Python
+__pycache__/
+.venv/
+

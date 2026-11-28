@@ -1,0 +1,47 @@
+{
+    "info": {
+        "name": "Estimator CAG",
+        "description": "Calls the /estimate endpoint of the estimator service. Start the server first (VS Code debug config 'Estimator: debug /estimate').",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8001"
+        }
+    ],
+    "item": [
+        {
+            "name": "Estimate project",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\"transcription\": \"Client (Laura): We run a small chain of three bakeries and we are tired of tracking stock in spreadsheets. We want a web app where each store can see its inventory, log waste at the end of the day, and reorder ingredients from the suppliers we already use. Dev lead (Marco): Do you need separate logins per store, or one login for the whole chain? Laura: Separate logins per store, plus one admin account for head office who can see all three locations and the monthly totals. Marco: Should the reorder step send the order by email to suppliers, or do you need an integration with their systems? Laura: Email is fine for now. Later we might want a dashboard that shows which ingredients run out most often. Marco: Any mobile use? Laura: Yes, the waste log has to work well on a phone. The admin reports can stay desktop-only.\"}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/estimate",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "estimate"
+                    ]
+                }
+            }
+        }
+    ]
+}

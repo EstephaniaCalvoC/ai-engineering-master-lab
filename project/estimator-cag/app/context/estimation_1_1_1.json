@@ -1,0 +1,414 @@
+{
+  "version": "1.1.1",
+  "render_format": "json",
+  "template": "You are an expert in software project estimation.\nUse the following historical estimates as a reference:\n---\n{examples}\n---\nGenerate a detailed estimate for the described project.\nReturn only a JSON object with the fields \"phases\" (each with a name and a list of tasks with name and hours; include a final Contingency phase), \"team\" (role, count, part_time) and \"duration\" (min_weeks, max_weeks). Do not include a total; it is computed from the phases.",
+  "examples": [
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call — Inventory & Purchasing Platform for Norte Distribuciones",
+          "date": "2026-03-10",
+          "duration_minutes": 75,
+          "attendees": {
+            "client": [
+              "COO",
+              "Head of Warehouse Operations",
+              "Purchasing Manager",
+              "IT Coordinator (one person, part-time)"
+            ],
+            "us": [
+              "Account Manager",
+              "Tech Lead",
+              "Product Designer"
+            ]
+          }
+        },
+        "context_and_problem": "Norte Distribuciones is a mid-size distributor of industrial spare parts (about 12,000 active SKUs, 3 warehouses in two cities, 45 employees, about 600 orders/day). Inventory is tracked today in shared Excel files plus a 12-year-old desktop ERP (SAP Business One 9.3, on-premise) that is only used for invoicing. Consequences reported by the client: frequent stock-outs of fast-moving parts, about 4% mismatch between physical and recorded stock, purchase orders created by email, and no visibility of stock across warehouses. Stock counts take 2 full days per quarter.",
+        "goal": "Replace the spreadsheets with a web-based inventory and purchasing platform that gives real-time stock per warehouse, tracks every stock movement, automates reorder suggestions, and manages purchase orders end to end. Success criteria stated by the client: stock accuracy above 98%, stock-outs of top-200 SKUs reduced by 50% within 6 months, quarterly count reduced to 1 day.",
+        "in_scope": [
+          "Product catalog: SKUs with variants, categories, units of measure, supplier(s), min/max stock levels. Bulk CSV import/export.",
+          "Multi-warehouse and bin-location management (3 warehouses, about 40 locations each).",
+          "Stock movements ledger: goods receipt, issue, transfer between warehouses, manual adjustment with reason. Every movement is immutable and audited.",
+          "Purchase orders: supplier management, PO creation, approval flow (2 levels above a configurable amount), partial receipts, PDF/email to supplier.",
+          "Low-stock alerts and reorder suggestions based on min levels and last-90-day consumption.",
+          "Barcode support: generate labels (Code128) and scan with the phone camera from the browser (no native app).",
+          "Dashboard: stock value, stock-outs, slow movers, open POs, movements per day. Reports exportable to CSV/XLSX.",
+          "Roles: Admin, Warehouse Operator, Purchasing, Read-only (manager). Login with the client's Microsoft Entra ID (OIDC SSO).",
+          "One-way sync of products and stock levels to the existing SAP B1, running hourly (confirmed in the call).",
+          "One-time migration of current Excel data.",
+          "UI in Spanish and English."
+        ],
+        "out_of_scope": [
+          "Sales orders / e-commerce",
+          "Invoicing",
+          "Native mobile apps",
+          "Offline mode",
+          "Demand forecasting with ML",
+          "RFID",
+          "Multi-currency accounting",
+          "Supplier portal",
+          "Lot/serial/expiry tracking (confirmed not needed)",
+          "Hardware procurement: scanners and label printers (the client buys them)"
+        ],
+        "constraints": [
+          "Budget ceiling communicated informally: about USD 55k.",
+          "Hard deadline: go-live before the high season starting 2026-09-01, so development must finish by mid-July at the latest. Kickoff is planned for 2026-04-06.",
+          "Data residency: data must stay in the AWS sa-east-1 (Sao Paulo) region.",
+          "The IT Coordinator is only available about 4 h/week; business stakeholders can attend one weekly 1-hour demo/feedback session.",
+          "Warehouse Wi-Fi is unreliable in one location; the UI must tolerate slow connections (no offline mode, but retries and clear error states).",
+          "Users are not technical: the main flows (receive, issue, transfer) must take at most 3 taps/clicks from the home screen on a phone.",
+          "Target scale: up to 15 concurrent users, 12k SKUs, about 2,000 movements/day, 5 years of history."
+        ],
+        "proposed_stack": {
+          "frontend": "React 18 + TypeScript, Vite, TanStack Query, Tailwind + component library, PWA for camera scanning (ZXing).",
+          "backend": "Node.js 20 + NestJS (REST, OpenAPI), PostgreSQL 15 (RDS), Prisma ORM, BullMQ + Redis for background jobs (imports, alerts, ERP sync).",
+          "auth": "Microsoft Entra ID via OIDC, roles mapped from groups.",
+          "infra": "AWS (ECS Fargate, RDS, ElastiCache, S3, SES, CloudWatch), Terraform, GitHub Actions CI/CD, 3 environments (dev, staging, prod).",
+          "quality": "Jest, React Testing Library, Playwright, Sentry."
+        },
+        "integrations": [
+          "Microsoft Entra ID (SSO): client IT already has a tenant and will create the app registration.",
+          "SAP Business One 9.3 on-premise: the Service Layer is enabled (confirmed by client IT during the call). Access from AWS goes through a site-to-site VPN that client IT will provide; sync is one-way (platform to SAP) and hourly.",
+          "Amazon SES for email; supplier email templates provided by the client."
+        ],
+        "assumptions": [
+          "Client provides Excel data within 2 weeks of kickoff; data cleaning of up to 12k rows is done by the client, we only validate and load it.",
+          "A single approval workflow (configurable threshold), not a generic workflow engine.",
+          "Up to 18 distinct screens in the high-fidelity design; the client has no brand guide beyond a logo.",
+          "Client feedback within 2 business days; one consolidated round of changes per demo.",
+          "2 UAT cycles of 1 week each, executed by the client.",
+          "Purchase order approval: orders up to USD 2,000 are approved by the Purchasing Manager; above that, the COO also approves. The threshold is configurable by an Admin.",
+          "Reports beyond the dashboard: 5 reports (stock by warehouse, movements by period, slow movers, supplier performance, open POs).",
+          "The client provides the label printer (Zebra, 100x50 mm labels) and the scanners; Bluetooth/USB HID scanners work as keyboard input with no extra development.",
+          "Spanish/English scope includes the UI, emails and PDFs.",
+          "Support after hypercare is out of this estimate and handled under a separate agreement."
+        ],
+        "risks": [
+          {
+            "level": "HIGH",
+            "description": "SAP B1 9.3 is an old version; the Service Layer is enabled but the integration depends on the client's VPN and on SAP-side permissions being granted on time."
+          },
+          {
+            "level": "HIGH",
+            "description": "Data quality of the Excel files (duplicate SKUs, inconsistent units) may delay migration and the stock accuracy goal."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Limited client availability (IT 4 h/week) can block SSO setup, VPN and UAT."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Budget (about 55k) is tight relative to scope; scope creep around reports and approval rules is likely."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Browser camera barcode scanning is less reliable on low-end Android devices and in low light; the fallback is a USB/Bluetooth HID scanner."
+          },
+          {
+            "level": "LOW",
+            "description": "Fixed go-live date before high season leaves little slack; any delay in kickoff impacts directly."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery, setup and infrastructure",
+            "tasks": [
+              {
+                "name": "Kickoff, requirements refinement and backlog grooming",
+                "hours": 16
+              },
+              {
+                "name": "Technical architecture and ADRs (auth, multi-warehouse model, ledger design)",
+                "hours": 12
+              },
+              {
+                "name": "Monorepo setup, linting, CI pipeline (GitHub Actions: build, test, lint)",
+                "hours": 14
+              },
+              {
+                "name": "AWS infrastructure as code with Terraform (VPC, ECS, RDS, Redis, S3, SES) for dev/staging/prod",
+                "hours": 28
+              },
+              {
+                "name": "CD pipelines, environment config and secrets management",
+                "hours": 10
+              },
+              {
+                "name": "Observability: structured logging, Sentry, CloudWatch dashboards and alarms",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "UX/UI design",
+            "tasks": [
+              {
+                "name": "User flows and low-fi wireframes for main journeys (receive, issue, transfer, PO, count)",
+                "hours": 20
+              },
+              {
+                "name": "Design system: tokens, base components, mobile-first patterns",
+                "hours": 16
+              },
+              {
+                "name": "High-fidelity design of ~18 screens (desktop + mobile)",
+                "hours": 36
+              },
+              {
+                "name": "Clickable prototype and usability review with warehouse operators",
+                "hours": 12
+              },
+              {
+                "name": "Design iterations after feedback and developer handoff",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "Backend",
+            "tasks": [
+              {
+                "name": "Database schema design, migrations and seed data",
+                "hours": 16
+              },
+              {
+                "name": "Authentication: Entra ID OIDC, session/JWT handling, group-to-role mapping",
+                "hours": 20
+              },
+              {
+                "name": "RBAC for 4 roles with permission guards on all endpoints",
+                "hours": 12
+              },
+              {
+                "name": "Product catalog API: SKUs, variants, categories, units of measure, suppliers",
+                "hours": 28
+              },
+              {
+                "name": "Warehouse and bin-location management API",
+                "hours": 14
+              },
+              {
+                "name": "Stock movements ledger: receipts, issues, transfers, adjustments with transactional integrity and concurrency control",
+                "hours": 44
+              },
+              {
+                "name": "Stock level queries and per-warehouse/per-location availability (materialized views / indexes)",
+                "hours": 16
+              },
+              {
+                "name": "Supplier management API",
+                "hours": 10
+              },
+              {
+                "name": "Purchase orders API: lifecycle, 2-level approval, partial receipts",
+                "hours": 36
+              },
+              {
+                "name": "PO PDF generation and email to supplier via SES (ES/EN templates)",
+                "hours": 14
+              },
+              {
+                "name": "Reorder suggestion engine and low-stock alerts (scheduled BullMQ jobs)",
+                "hours": 20
+              },
+              {
+                "name": "Barcode label generation (Code128, PDF label sheets) and lookup endpoint",
+                "hours": 12
+              },
+              {
+                "name": "Immutable audit log for all state-changing operations",
+                "hours": 12
+              },
+              {
+                "name": "CSV bulk import/export with validation, error report and async processing",
+                "hours": 24
+              },
+              {
+                "name": "Dashboard and reports API (5 reports + KPIs), CSV/XLSX export",
+                "hours": 28
+              },
+              {
+                "name": "SAP Business One one-way sync (Service Layer client over VPN, hourly job, mapping, retries, reconciliation)",
+                "hours": 48
+              },
+              {
+                "name": "API documentation (OpenAPI), pagination, filtering and error conventions",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "Frontend",
+            "tasks": [
+              {
+                "name": "App shell, routing, API client generation from OpenAPI, state/query setup",
+                "hours": 16
+              },
+              {
+                "name": "Login flow, role-based route guards and session expiry handling",
+                "hours": 12
+              },
+              {
+                "name": "Catalog screens: list with filters/search, detail, create/edit, variants",
+                "hours": 28
+              },
+              {
+                "name": "Warehouses and locations screens",
+                "hours": 12
+              },
+              {
+                "name": "Stock overview and movement screens (receive, issue, transfer, adjust) optimized for mobile",
+                "hours": 34
+              },
+              {
+                "name": "Purchase order screens: list, create, approval, receive goods, supplier management",
+                "hours": 34
+              },
+              {
+                "name": "Dashboard with KPI tiles and charts",
+                "hours": 24
+              },
+              {
+                "name": "Reports screens with filters and export",
+                "hours": 14
+              },
+              {
+                "name": "Camera barcode scanning in the browser (PWA, ZXing) with HID scanner support",
+                "hours": 20
+              },
+              {
+                "name": "Import wizard: upload, column mapping, validation preview, error download",
+                "hours": 18
+              },
+              {
+                "name": "Alerts / notification center and reorder suggestions view",
+                "hours": 12
+              },
+              {
+                "name": "Internationalization (ES/EN) for all screens",
+                "hours": 10
+              },
+              {
+                "name": "Responsive polish, accessibility pass (WCAG AA basics), slow-connection states",
+                "hours": 16
+              }
+            ]
+          },
+          {
+            "name": "Quality assurance",
+            "tasks": [
+              {
+                "name": "Backend unit tests (ledger, PO workflow, reorder engine at high coverage)",
+                "hours": 30
+              },
+              {
+                "name": "Backend integration tests against a real PostgreSQL (Testcontainers)",
+                "hours": 24
+              },
+              {
+                "name": "Frontend component and hook tests",
+                "hours": 18
+              },
+              {
+                "name": "E2E tests with Playwright for critical flows (login, receive, transfer, PO approval, import)",
+                "hours": 24
+              },
+              {
+                "name": "Performance and load testing (15 concurrent users, 12k SKUs, 2k movements/day) and query tuning",
+                "hours": 14
+              },
+              {
+                "name": "Security review: OWASP checklist, dependency scanning, secrets and IAM review",
+                "hours": 12
+              },
+              {
+                "name": "Manual QA and regression (2 cycles) on desktop and low-end Android devices",
+                "hours": 32
+              },
+              {
+                "name": "UAT support and bug fixing (2 cycles of 1 week)",
+                "hours": 40
+              }
+            ]
+          },
+          {
+            "name": "Migration, deployment and handover",
+            "tasks": [
+              {
+                "name": "Excel data analysis, mapping, migration scripts and dry runs",
+                "hours": 28
+              },
+              {
+                "name": "Production deployment, cutover runbook and rollback plan",
+                "hours": 12
+              },
+              {
+                "name": "Documentation: user guide (ES), admin guide, technical runbook",
+                "hours": 16
+              },
+              {
+                "name": "Training: 2 sessions (warehouse and purchasing/admin), recorded",
+                "hours": 8
+              },
+              {
+                "name": "Hypercare (2 weeks): bug fixing and on-call support",
+                "hours": 24
+              }
+            ]
+          },
+          {
+            "name": "Project management",
+            "tasks": [
+              {
+                "name": "Project management, weekly demos, status reports, client coordination (~11%)",
+                "hours": 90
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (15%, driven by SAP B1 and data-quality risks)",
+                "hours": 180
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Tech Lead / senior full-stack developer",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Full-stack developer",
+            "count": 2,
+            "part_time": false
+          },
+          {
+            "role": "Product Designer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "QA engineer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "Project Manager",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 14,
+          "max_weeks": 16
+        }
+      }
+    }
+  ]
+}

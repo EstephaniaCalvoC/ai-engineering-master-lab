@@ -1,0 +1,2903 @@
+{
+  "version": "1.2.6",
+  "render_format": "json",
+  "template": "You are a senior software delivery consultant who estimates custom software projects for a development agency. Your estimates are used to quote and plan real projects, so they must be realistic, detailed and internally consistent.\n\nBelow are historical estimates from past projects. Each one shows a meeting summary and the estimation that was produced from it. Use them to learn the structure, the level of task detail, the way hours are scaled to project size and complexity, and the way contingency is applied. Do not copy their tasks, hours or technologies: every project is different, and your estimate must follow the project you are given.\n---\n{examples}\n---\n\nNow estimate the project described in the user's meeting summary or transcription. Work as follows:\n1. Read the whole input first. Identify the goal, the scope that is included, what is explicitly excluded, the constraints (budget, deadline, regulation, team or client availability, scale), the technology stack, the integrations, and the agreed assumptions.\n2. Group the work into phases that fit this project. Use only the phases the project needs, and do not copy the phase list of the examples if it does not fit.\n3. Break each phase into concrete tasks, each describing what is built and, when useful, the technology or quantity involved. Keep tasks small enough to be estimated with confidence, and make sure every included feature has tasks that cover it.\n4. Include the work that is easy to forget: setup, CI/CD and environments, observability, testing and QA, security, data migration, documentation, training, release and support after launch, and project management and client coordination, in the proportion the project needs.\n5. Do not add work that is out of scope, and do not invent requirements. Where the input leaves a detail open, use the most common approach for the stated stack and constraints.\n6. Size each task in hours, as the effort of the people doing the work for a team of average seniority. A task has a positive number of hours, and a small project must have a small estimate: do not add phases or overhead that the project does not justify.\n7. Finish with a phase named Contingency containing one task. Its name states the percentage and the main drivers, and its size reflects the risks and unknowns in the input: lower for small and well-understood work, higher for integrations, legacy systems, hardware or experimental work.\n8. Recommend the team (role, number of people, and whether the role is part-time) and a duration range in weeks. The team must be able to deliver the total hours inside the duration, taking into account the constraints and any stated deadline.\n\nReturn only a JSON object with the fields \"phases\" (each with a name and a list of tasks with name and hours), \"team\" (role, count, part_time) and \"duration\" (min_weeks, max_weeks). Do not include totals, prices or any other text: totals are computed from the phases.",
+  "examples": [
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call — Inventory & Purchasing Platform for Norte Distribuciones",
+          "date": "2026-03-10",
+          "duration_minutes": 75,
+          "attendees": {
+            "client": [
+              "COO",
+              "Head of Warehouse Operations",
+              "Purchasing Manager",
+              "IT Coordinator (one person, part-time)"
+            ],
+            "us": [
+              "Account Manager",
+              "Tech Lead",
+              "Product Designer"
+            ]
+          }
+        },
+        "context_and_problem": "Norte Distribuciones is a mid-size distributor of industrial spare parts (about 12,000 active SKUs, 3 warehouses in two cities, 45 employees, about 600 orders/day). Inventory is tracked today in shared Excel files plus a 12-year-old desktop ERP (SAP Business One 9.3, on-premise) that is only used for invoicing. Consequences reported by the client: frequent stock-outs of fast-moving parts, about 4% mismatch between physical and recorded stock, purchase orders created by email, and no visibility of stock across warehouses. Stock counts take 2 full days per quarter.",
+        "goal": "Replace the spreadsheets with a web-based inventory and purchasing platform that gives real-time stock per warehouse, tracks every stock movement, automates reorder suggestions, and manages purchase orders end to end. Success criteria stated by the client: stock accuracy above 98%, stock-outs of top-200 SKUs reduced by 50% within 6 months, quarterly count reduced to 1 day.",
+        "in_scope": [
+          "Product catalog: SKUs with variants, categories, units of measure, supplier(s), min/max stock levels. Bulk CSV import/export.",
+          "Multi-warehouse and bin-location management (3 warehouses, about 40 locations each).",
+          "Stock movements ledger: goods receipt, issue, transfer between warehouses, manual adjustment with reason. Every movement is immutable and audited.",
+          "Purchase orders: supplier management, PO creation, approval flow (2 levels above a configurable amount), partial receipts, PDF/email to supplier.",
+          "Low-stock alerts and reorder suggestions based on min levels and last-90-day consumption.",
+          "Barcode support: generate labels (Code128) and scan with the phone camera from the browser (no native app).",
+          "Dashboard: stock value, stock-outs, slow movers, open POs, movements per day. Reports exportable to CSV/XLSX.",
+          "Roles: Admin, Warehouse Operator, Purchasing, Read-only (manager). Login with the client's Microsoft Entra ID (OIDC SSO).",
+          "One-way sync of products and stock levels to the existing SAP B1, running hourly (confirmed in the call).",
+          "One-time migration of current Excel data.",
+          "UI in Spanish and English."
+        ],
+        "out_of_scope": [
+          "Sales orders / e-commerce",
+          "Invoicing",
+          "Native mobile apps",
+          "Offline mode",
+          "Demand forecasting with ML",
+          "RFID",
+          "Multi-currency accounting",
+          "Supplier portal",
+          "Lot/serial/expiry tracking (confirmed not needed)",
+          "Hardware procurement: scanners and label printers (the client buys them)"
+        ],
+        "constraints": [
+          "Budget ceiling communicated informally: about USD 55k.",
+          "Hard deadline: go-live before the high season starting 2026-09-01, so development must finish by mid-July at the latest. Kickoff is planned for 2026-04-06.",
+          "Data residency: data must stay in the AWS sa-east-1 (Sao Paulo) region.",
+          "The IT Coordinator is only available about 4 h/week; business stakeholders can attend one weekly 1-hour demo/feedback session.",
+          "Warehouse Wi-Fi is unreliable in one location; the UI must tolerate slow connections (no offline mode, but retries and clear error states).",
+          "Users are not technical: the main flows (receive, issue, transfer) must take at most 3 taps/clicks from the home screen on a phone.",
+          "Target scale: up to 15 concurrent users, 12k SKUs, about 2,000 movements/day, 5 years of history."
+        ],
+        "proposed_stack": {
+          "frontend": "React 18 + TypeScript, Vite, TanStack Query, Tailwind + component library, PWA for camera scanning (ZXing).",
+          "backend": "Node.js 20 + NestJS (REST, OpenAPI), PostgreSQL 15 (RDS), Prisma ORM, BullMQ + Redis for background jobs (imports, alerts, ERP sync).",
+          "auth": "Microsoft Entra ID via OIDC, roles mapped from groups.",
+          "infra": "AWS (ECS Fargate, RDS, ElastiCache, S3, SES, CloudWatch), Terraform, GitHub Actions CI/CD, 3 environments (dev, staging, prod).",
+          "quality": "Jest, React Testing Library, Playwright, Sentry."
+        },
+        "integrations": [
+          "Microsoft Entra ID (SSO): client IT already has a tenant and will create the app registration.",
+          "SAP Business One 9.3 on-premise: the Service Layer is enabled (confirmed by client IT during the call). Access from AWS goes through a site-to-site VPN that client IT will provide; sync is one-way (platform to SAP) and hourly.",
+          "Amazon SES for email; supplier email templates provided by the client."
+        ],
+        "assumptions": [
+          "Client provides Excel data within 2 weeks of kickoff; data cleaning of up to 12k rows is done by the client, we only validate and load it.",
+          "A single approval workflow (configurable threshold), not a generic workflow engine.",
+          "Up to 18 distinct screens in the high-fidelity design; the client has no brand guide beyond a logo.",
+          "Client feedback within 2 business days; one consolidated round of changes per demo.",
+          "2 UAT cycles of 1 week each, executed by the client.",
+          "Purchase order approval: orders up to USD 2,000 are approved by the Purchasing Manager; above that, the COO also approves. The threshold is configurable by an Admin.",
+          "Reports beyond the dashboard: 5 reports (stock by warehouse, movements by period, slow movers, supplier performance, open POs).",
+          "The client provides the label printer (Zebra, 100x50 mm labels) and the scanners; Bluetooth/USB HID scanners work as keyboard input with no extra development.",
+          "Spanish/English scope includes the UI, emails and PDFs.",
+          "Support after hypercare is out of this estimate and handled under a separate agreement."
+        ],
+        "risks": [
+          {
+            "level": "HIGH",
+            "description": "SAP B1 9.3 is an old version; the Service Layer is enabled but the integration depends on the client's VPN and on SAP-side permissions being granted on time."
+          },
+          {
+            "level": "HIGH",
+            "description": "Data quality of the Excel files (duplicate SKUs, inconsistent units) may delay migration and the stock accuracy goal."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Limited client availability (IT 4 h/week) can block SSO setup, VPN and UAT."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Budget (about 55k) is tight relative to scope; scope creep around reports and approval rules is likely."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Browser camera barcode scanning is less reliable on low-end Android devices and in low light; the fallback is a USB/Bluetooth HID scanner."
+          },
+          {
+            "level": "LOW",
+            "description": "Fixed go-live date before high season leaves little slack; any delay in kickoff impacts directly."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery, setup and infrastructure",
+            "tasks": [
+              {
+                "name": "Kickoff, requirements refinement and backlog grooming",
+                "hours": 16
+              },
+              {
+                "name": "Technical architecture and ADRs (auth, multi-warehouse model, ledger design)",
+                "hours": 12
+              },
+              {
+                "name": "Monorepo setup, linting, CI pipeline (GitHub Actions: build, test, lint)",
+                "hours": 14
+              },
+              {
+                "name": "AWS infrastructure as code with Terraform (VPC, ECS, RDS, Redis, S3, SES) for dev/staging/prod",
+                "hours": 28
+              },
+              {
+                "name": "CD pipelines, environment config and secrets management",
+                "hours": 10
+              },
+              {
+                "name": "Observability: structured logging, Sentry, CloudWatch dashboards and alarms",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "UX/UI design",
+            "tasks": [
+              {
+                "name": "User flows and low-fi wireframes for main journeys (receive, issue, transfer, PO, count)",
+                "hours": 20
+              },
+              {
+                "name": "Design system: tokens, base components, mobile-first patterns",
+                "hours": 16
+              },
+              {
+                "name": "High-fidelity design of ~18 screens (desktop + mobile)",
+                "hours": 36
+              },
+              {
+                "name": "Clickable prototype and usability review with warehouse operators",
+                "hours": 12
+              },
+              {
+                "name": "Design iterations after feedback and developer handoff",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "Backend",
+            "tasks": [
+              {
+                "name": "Database schema design, migrations and seed data",
+                "hours": 16
+              },
+              {
+                "name": "Authentication: Entra ID OIDC, session/JWT handling, group-to-role mapping",
+                "hours": 20
+              },
+              {
+                "name": "RBAC for 4 roles with permission guards on all endpoints",
+                "hours": 12
+              },
+              {
+                "name": "Product catalog API: SKUs, variants, categories, units of measure, suppliers",
+                "hours": 28
+              },
+              {
+                "name": "Warehouse and bin-location management API",
+                "hours": 14
+              },
+              {
+                "name": "Stock movements ledger: receipts, issues, transfers, adjustments with transactional integrity and concurrency control",
+                "hours": 44
+              },
+              {
+                "name": "Stock level queries and per-warehouse/per-location availability (materialized views / indexes)",
+                "hours": 16
+              },
+              {
+                "name": "Supplier management API",
+                "hours": 10
+              },
+              {
+                "name": "Purchase orders API: lifecycle, 2-level approval, partial receipts",
+                "hours": 36
+              },
+              {
+                "name": "PO PDF generation and email to supplier via SES (ES/EN templates)",
+                "hours": 14
+              },
+              {
+                "name": "Reorder suggestion engine and low-stock alerts (scheduled BullMQ jobs)",
+                "hours": 20
+              },
+              {
+                "name": "Barcode label generation (Code128, PDF label sheets) and lookup endpoint",
+                "hours": 12
+              },
+              {
+                "name": "Immutable audit log for all state-changing operations",
+                "hours": 12
+              },
+              {
+                "name": "CSV bulk import/export with validation, error report and async processing",
+                "hours": 24
+              },
+              {
+                "name": "Dashboard and reports API (5 reports + KPIs), CSV/XLSX export",
+                "hours": 28
+              },
+              {
+                "name": "SAP Business One one-way sync (Service Layer client over VPN, hourly job, mapping, retries, reconciliation)",
+                "hours": 48
+              },
+              {
+                "name": "API documentation (OpenAPI), pagination, filtering and error conventions",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "Frontend",
+            "tasks": [
+              {
+                "name": "App shell, routing, API client generation from OpenAPI, state/query setup",
+                "hours": 16
+              },
+              {
+                "name": "Login flow, role-based route guards and session expiry handling",
+                "hours": 12
+              },
+              {
+                "name": "Catalog screens: list with filters/search, detail, create/edit, variants",
+                "hours": 28
+              },
+              {
+                "name": "Warehouses and locations screens",
+                "hours": 12
+              },
+              {
+                "name": "Stock overview and movement screens (receive, issue, transfer, adjust) optimized for mobile",
+                "hours": 34
+              },
+              {
+                "name": "Purchase order screens: list, create, approval, receive goods, supplier management",
+                "hours": 34
+              },
+              {
+                "name": "Dashboard with KPI tiles and charts",
+                "hours": 24
+              },
+              {
+                "name": "Reports screens with filters and export",
+                "hours": 14
+              },
+              {
+                "name": "Camera barcode scanning in the browser (PWA, ZXing) with HID scanner support",
+                "hours": 20
+              },
+              {
+                "name": "Import wizard: upload, column mapping, validation preview, error download",
+                "hours": 18
+              },
+              {
+                "name": "Alerts / notification center and reorder suggestions view",
+                "hours": 12
+              },
+              {
+                "name": "Internationalization (ES/EN) for all screens",
+                "hours": 10
+              },
+              {
+                "name": "Responsive polish, accessibility pass (WCAG AA basics), slow-connection states",
+                "hours": 16
+              }
+            ]
+          },
+          {
+            "name": "Quality assurance",
+            "tasks": [
+              {
+                "name": "Backend unit tests (ledger, PO workflow, reorder engine at high coverage)",
+                "hours": 30
+              },
+              {
+                "name": "Backend integration tests against a real PostgreSQL (Testcontainers)",
+                "hours": 24
+              },
+              {
+                "name": "Frontend component and hook tests",
+                "hours": 18
+              },
+              {
+                "name": "E2E tests with Playwright for critical flows (login, receive, transfer, PO approval, import)",
+                "hours": 24
+              },
+              {
+                "name": "Performance and load testing (15 concurrent users, 12k SKUs, 2k movements/day) and query tuning",
+                "hours": 14
+              },
+              {
+                "name": "Security review: OWASP checklist, dependency scanning, secrets and IAM review",
+                "hours": 12
+              },
+              {
+                "name": "Manual QA and regression (2 cycles) on desktop and low-end Android devices",
+                "hours": 32
+              },
+              {
+                "name": "UAT support and bug fixing (2 cycles of 1 week)",
+                "hours": 40
+              }
+            ]
+          },
+          {
+            "name": "Migration, deployment and handover",
+            "tasks": [
+              {
+                "name": "Excel data analysis, mapping, migration scripts and dry runs",
+                "hours": 28
+              },
+              {
+                "name": "Production deployment, cutover runbook and rollback plan",
+                "hours": 12
+              },
+              {
+                "name": "Documentation: user guide (ES), admin guide, technical runbook",
+                "hours": 16
+              },
+              {
+                "name": "Training: 2 sessions (warehouse and purchasing/admin), recorded",
+                "hours": 8
+              },
+              {
+                "name": "Hypercare (2 weeks): bug fixing and on-call support",
+                "hours": 24
+              }
+            ]
+          },
+          {
+            "name": "Project management",
+            "tasks": [
+              {
+                "name": "Project management, weekly demos, status reports, client coordination (~11%)",
+                "hours": 90
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (15%, driven by SAP B1 and data-quality risks)",
+                "hours": 180
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Tech Lead / senior full-stack developer",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Full-stack developer",
+            "count": 2,
+            "part_time": false
+          },
+          {
+            "role": "Product Designer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "QA engineer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "Project Manager",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 14,
+          "max_weeks": 16
+        }
+      }
+    },
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call — Internal Knowledge Assistant (RAG) for Ingenia Consultores",
+          "date": "2026-01-20",
+          "duration_minutes": 90,
+          "attendees": {
+            "client": [
+              "CTO",
+              "Head of Knowledge Management",
+              "IT Security Officer",
+              "Microsoft 365 Administrator (part-time)",
+              "Senior Project Engineer (pilot user representative)"
+            ],
+            "us": [
+              "Account Manager",
+              "Tech Lead / AI Engineer",
+              "Solutions Architect"
+            ]
+          }
+        },
+        "context_and_problem": "Ingenia is a 300-person engineering consultancy with 15 years of project reports, technical standards, proposals and internal policies spread over SharePoint Online (about 85,000 documents), Confluence Cloud (about 9,000 pages) and file shares that were already migrated to SharePoint libraries (about 26,000 documents). In total there are about 120,000 documents, mostly PDF and Word, and roughly 15% (about 18,000) are scanned PDFs without a text layer. Engineers report spending 3 to 5 hours per week looking for precedent (previous designs, calculation memos, standard clauses), and a survey of 80 engineers showed that 60% give up and rebuild from scratch at least once a month. Search in SharePoint is keyword-only, ignores scanned files and does not work across Confluence. Content is bilingual: about 70% Spanish and 30% English.",
+        "goal": "Build an internal assistant that answers engineering questions in Spanish and English with citations to the source documents, available inside Microsoft Teams. Success criteria stated by the client: at least 85% of answers on a curated set of 150 questions rated correct and grounded by two senior engineers, at least 90% of answers carry a valid citation, no user ever sees a document they cannot open in the source system, p95 latency of the first token under 6 seconds, and an average LLM plus search cost below USD 0.08 per question. A pilot with 40 engineers runs for 3 weeks after go-live.",
+        "in_scope": [
+          "Ingestion of about 120,000 documents (PDF, DOCX, PPTX, XLSX text, Confluence pages) from SharePoint Online via Microsoft Graph API and from Confluence Cloud via the REST API, with an initial full load and incremental sync every 2 hours (Celery workers with Redis).",
+          "OCR with Amazon Textract for the about 18,000 scanned PDFs, with a quality check on a sample of 200 pages and a fallback path for failed pages.",
+          "Document parsing and structure-aware chunking (headings, tables, page numbers kept as metadata), with 3 chunking strategies compared in a time-boxed experiment and one selected.",
+          "Embeddings with Amazon Titan Text Embeddings V2 and storage in an Amazon OpenSearch Serverless collection that holds vectors, BM25 fields and ACL metadata.",
+          "Hybrid retrieval (vector plus BM25, fused), reranking with Cohere Rerank on Amazon Bedrock, query rewriting for follow-up questions and language detection (ES/EN, cross-language retrieval).",
+          "Answer generation with Anthropic Claude on Amazon Bedrock, orchestrated with LlamaIndex, with inline citations (document title, page, link to the source), and a clear 'no answer found' behavior.",
+          "Permission-aware search: the ACLs (SharePoint groups and users, Confluence space and page restrictions) are synced into document-level security filters in OpenSearch, evaluated per user identity from Microsoft Entra ID, with a permission sync every 30 minutes.",
+          "Microsoft Teams bot (Bot Framework SDK) for personal chat, with streaming-style progressive replies, Adaptive Cards for citations, thumbs up/down feedback with an optional comment, and Entra ID single sign-on.",
+          "Guardrails: prompt-injection and jailbreak filtering on documents and questions, off-topic handling, PII masking in logs, hallucination control by grounding checks and citation verification, rate limits of 30 questions per user per hour.",
+          "Prompt versioning (prompts stored in the repository and released with a version tag), Langfuse tracing of every request and token cost monitoring per user group, with a budget alarm.",
+          "Evaluation harness: a curated set of 150 questions (100 Spanish, 50 English) with reference answers and source documents, Ragas metrics (faithfulness, answer relevancy, context precision and recall) run in CI and on demand, plus a human review round of 2 days by two senior engineers.",
+          "Feedback capture stored in an OpenSearch index and a weekly feedback report as a CSV exported to the Knowledge Management team.",
+          "Infrastructure as code with Terraform on AWS (ECS Fargate, ElastiCache Redis, OpenSearch Serverless, Bedrock access, S3, Secrets Manager), GitHub Actions CI/CD, 2 environments (staging and production).",
+          "Documentation, a 1-hour training session for the pilot group, a 1-page user guide and 2 weeks of hypercare after go-live."
+        ],
+        "out_of_scope": [
+          "A standalone web chat interface (Teams is the only channel)",
+          "Fine-tuning or training of any model",
+          "Answers generated from images, drawings, CAD files or the content of embedded images (only text and OCR text are indexed)",
+          "Voice interface and Microsoft Teams channel or group-chat bots",
+          "Ingestion of email, Slack or ERP data",
+          "Document authoring or summarization workflows beyond question answering",
+          "Cleanup, deduplication or reclassification of the document repositories by Ingenia content owners",
+          "Translation of the document corpus",
+          "Support and model-quality tuning after hypercare (handled under a separate agreement)"
+        ],
+        "constraints": [
+          "Budget ceiling communicated by the CTO: about USD 70k for the build, excluding AWS and Bedrock consumption.",
+          "Kickoff on 2026-02-02 and a pilot go-live target of mid-May 2026 (about 15 weeks), before the Q2 proposal season.",
+          "Data residency: all data and model inference must stay in AWS us-east-1 (Bedrock models available there); no document content may leave the Ingenia AWS account.",
+          "ACL fidelity is mandatory: the IT Security Officer must sign off a permission test on 50 documents with known restrictions before the pilot.",
+          "The Microsoft 365 Administrator is available about 4 hours per week and is the only person who can grant Graph API consent and Teams app approval.",
+          "The Head of Knowledge Management and two senior engineers can dedicate 3 days in total to reviewing the question set and answers.",
+          "Scale: up to 300 users, about 60 concurrent, about 1,500 questions per day at peak, and a corpus of 120,000 documents growing by about 400 per week.",
+          "Quality targets are measured on the curated set; the contract commits to the measured improvement process, not to a guaranteed percentage beyond the 85% target."
+        ],
+        "proposed_stack": {
+          "backend": "Python 3.12, FastAPI, LlamaIndex for orchestration, Celery with Redis for ingestion and sync jobs.",
+          "models": "Anthropic Claude on Amazon Bedrock for answers and query rewriting, Amazon Titan Text Embeddings V2 for embeddings, Cohere Rerank on Amazon Bedrock.",
+          "search": "Amazon OpenSearch Serverless (vector plus BM25 hybrid search with document-level security filters), Amazon Textract for OCR of scanned documents.",
+          "connectors_and_ui": "Microsoft Graph API for SharePoint, Confluence REST API, Microsoft Teams bot built with the Bot Framework SDK and Adaptive Cards.",
+          "auth": "Microsoft Entra ID (OIDC and Teams SSO), identities mapped to the ACL principals stored with each document.",
+          "infra": "AWS (ECS Fargate, ElastiCache Redis, S3, Secrets Manager, CloudWatch), Terraform, GitHub Actions CI/CD, 2 environments (staging and production).",
+          "evaluation_and_ops": "Ragas with a curated question set for evals, Langfuse for tracing and cost tracking, pytest for unit and integration tests."
+        },
+        "integrations": [
+          "SharePoint Online through Microsoft Graph API (application permissions Sites.Read.All and Files.Read.All): the Microsoft 365 Administrator grants admin consent and creates the app registration in the first week.",
+          "Confluence Cloud through the REST API with a read-only service account and API token that Ingenia IT provides; page restrictions are read through the same API.",
+          "Microsoft Entra ID for Teams SSO and for resolving user group memberships used by the ACL filters.",
+          "Microsoft Teams: the bot is registered in the Azure Bot Service by Ingenia IT and distributed as a custom app to the pilot group first, then to the whole tenant.",
+          "Amazon Bedrock model access (Claude, Titan Embeddings V2, Cohere Rerank) enabled in the Ingenia AWS account in us-east-1; Ingenia requests the quota increases we specify in week 1."
+        ],
+        "assumptions": [
+          "The initial corpus is 120,000 documents with a median of 12 pages; documents above 300 pages (about 1,500) are indexed but truncated to the first 300 pages.",
+          "OCR covers the about 18,000 scanned PDFs, Spanish and English only; handwritten content is not indexed.",
+          "The curated question set has 150 questions, written by Ingenia engineers (we provide a template and help with 50 of them); reference answers are validated by two senior engineers.",
+          "The experimentation phase is time-boxed to 70 hours in total, with 3 chunking strategies, 2 retrieval configurations and 3 prompt iterations compared against the question set; work beyond the time-box is covered only by the contingency.",
+          "Permission sync handles users and groups from Entra ID and the native SharePoint and Confluence restrictions; sharing links created ad hoc ('anyone with the link') are treated as not accessible.",
+          "One Teams personal-chat bot, one tenant, Spanish and English UI strings; the answer language follows the language of the question.",
+          "Staging and production environments only; staging uses a 10% sample of the corpus.",
+          "Client feedback within 2 business days and one weekly 45-minute demo; the pilot of 40 users is run by Ingenia with our support.",
+          "Langfuse is self-hosted on ECS Fargate in the same account (open-source edition).",
+          "Hypercare lasts 2 weeks after the pilot go-live; support after that is out of this estimate."
+        ],
+        "risks": [
+          {
+            "level": "HIGH",
+            "description": "Answer quality may not reach 85% on the curated set in the planned iterations; scanned and table-heavy documents reduce retrieval accuracy, and extra tuning cycles would consume the contingency."
+          },
+          {
+            "level": "HIGH",
+            "description": "Document-level permissions are hard to mirror exactly (nested groups, inherited SharePoint permissions, Confluence page restrictions); a mistake would expose restricted content and block the security sign-off."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Microsoft Graph throttling and the size of the initial load (120,000 documents, 18,000 OCR jobs) may stretch the first full ingestion to several days and delay evaluation work."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Dependency on the Microsoft 365 Administrator (4 h/week) for Graph consent, Teams app approval and bot registration can delay the connector and bot work."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Bedrock quotas and latency for Claude and Cohere Rerank in us-east-1 may force throttling, caching or a smaller context, affecting the p95 latency and the cost per question targets."
+          },
+          {
+            "level": "LOW",
+            "description": "Prompt injection through document content is possible in a corpus of this size; the guardrails reduce but cannot eliminate the risk."
+          },
+          {
+            "level": "LOW",
+            "description": "Reviewers may disagree on what a correct answer is, which makes the evaluation set noisy and delays the quality measurement."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery, architecture and setup",
+            "tasks": [
+              {
+                "name": "Kickoff, requirements refinement and corpus audit (formats, languages, scanned share, sample of 200 documents)",
+                "hours": 14
+              },
+              {
+                "name": "Architecture and ADRs (ingestion pipeline, ACL model, index schema, Teams SSO flow)",
+                "hours": 10
+              },
+              {
+                "name": "Repository setup: Python 3.12 project, linting, pytest, GitHub Actions CI (lint, test, eval smoke run)",
+                "hours": 10
+              },
+              {
+                "name": "Terraform for staging and production (VPC, ECS Fargate, ElastiCache Redis, S3, Secrets Manager, OpenSearch Serverless collection)",
+                "hours": 22
+              },
+              {
+                "name": "CD pipelines, Bedrock model access, quotas and secrets management",
+                "hours": 8
+              },
+              {
+                "name": "Baseline retrieval spike: ingest 500 documents end to end and run 20 questions to validate the architecture",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Ingestion and connectors",
+            "tasks": [
+              {
+                "name": "Microsoft Graph connector for SharePoint: site and library crawl, delta queries, file download and throttling handling",
+                "hours": 26
+              },
+              {
+                "name": "Confluence REST connector: spaces, pages, attachments and incremental sync by last-modified",
+                "hours": 18
+              },
+              {
+                "name": "Document parsers for PDF, DOCX, PPTX and XLSX with page and heading metadata",
+                "hours": 20
+              },
+              {
+                "name": "Textract OCR pipeline for about 18,000 scanned PDFs (async jobs, retries, cost batching, text layer detection)",
+                "hours": 22
+              },
+              {
+                "name": "OCR quality check on 200 sampled pages and fallback for low-confidence pages",
+                "hours": 8
+              },
+              {
+                "name": "Structure-aware chunking with table handling and metadata (page, section, source URL, language)",
+                "hours": 18
+              },
+              {
+                "name": "Embedding job with Titan Text Embeddings V2 and bulk indexing into OpenSearch Serverless",
+                "hours": 14
+              },
+              {
+                "name": "Celery task orchestration: initial full load, incremental sync every 2 hours, idempotency, dead-letter handling and progress dashboard",
+                "hours": 22
+              },
+              {
+                "name": "Initial full ingestion run of 120,000 documents with monitoring and re-runs of failures",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Retrieval and answer generation",
+            "tasks": [
+              {
+                "name": "OpenSearch index mapping: vector fields, BM25 analyzers for Spanish and English, metadata and ACL fields",
+                "hours": 10
+              },
+              {
+                "name": "Hybrid retrieval with score fusion (vector plus BM25) and metadata filters",
+                "hours": 18
+              },
+              {
+                "name": "Cohere Rerank integration on Bedrock and top-k tuning",
+                "hours": 10
+              },
+              {
+                "name": "Query rewriting for follow-up questions and language detection with cross-language retrieval (ES/EN)",
+                "hours": 14
+              },
+              {
+                "name": "LlamaIndex RAG pipeline with Claude on Bedrock: context assembly, token budgeting, streaming responses",
+                "hours": 20
+              },
+              {
+                "name": "Citation generation and verification (title, page, source link) and 'no answer found' behavior",
+                "hours": 14
+              },
+              {
+                "name": "FastAPI service: chat endpoint, conversation memory, feedback endpoint, health checks and API contract",
+                "hours": 18
+              }
+            ]
+          },
+          {
+            "name": "Permissions and security",
+            "tasks": [
+              {
+                "name": "ACL extraction from SharePoint (permissions, inheritance, nested groups) and Confluence (space and page restrictions)",
+                "hours": 20
+              },
+              {
+                "name": "Permission sync every 30 minutes and mapping of Entra ID user groups to ACL principals",
+                "hours": 14
+              },
+              {
+                "name": "Document-level security filters in OpenSearch applied to every query, with user identity propagation from the bot",
+                "hours": 12
+              },
+              {
+                "name": "Permission test suite on 50 documents with known restrictions and sign-off session with the IT Security Officer",
+                "hours": 10
+              },
+              {
+                "name": "Security review: IAM least privilege, secrets, network, data residency checks and threat model of prompt injection",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "Microsoft Teams bot",
+            "tasks": [
+              {
+                "name": "Bot Framework SDK bot skeleton, Azure Bot registration and Teams app manifest",
+                "hours": 12
+              },
+              {
+                "name": "Teams SSO with Entra ID and user identity resolution",
+                "hours": 10
+              },
+              {
+                "name": "Conversation flow: progressive replies, Adaptive Cards with citations, error and empty states in Spanish and English",
+                "hours": 18
+              },
+              {
+                "name": "Feedback capture in the bot: thumbs up/down, optional comment, storage and weekly CSV report",
+                "hours": 10
+              },
+              {
+                "name": "Bot deployment to the pilot group and tenant, admin approval and onboarding message",
+                "hours": 6
+              }
+            ]
+          },
+          {
+            "name": "Experimentation and evaluation",
+            "tasks": [
+              {
+                "name": "Curated question set: design of the template, writing 50 questions with the client and collecting 100 more (150 in total, 100 ES and 50 EN)",
+                "hours": 18
+              },
+              {
+                "name": "Reference answers and source documents review with two senior engineers (2 review days)",
+                "hours": 12
+              },
+              {
+                "name": "Ragas evaluation harness: faithfulness, answer relevancy, context precision and recall, run in CI and on demand",
+                "hours": 18
+              },
+              {
+                "name": "Time-boxed experiment: 3 chunking strategies compared on the question set (chunk size, overlap, structure-aware)",
+                "hours": 24
+              },
+              {
+                "name": "Time-boxed experiment: 2 retrieval configurations (fusion weights, rerank depth, query rewriting on or off)",
+                "hours": 18
+              },
+              {
+                "name": "Time-boxed prompt iteration: 3 rounds of system prompt tuning with error analysis",
+                "hours": 28
+              },
+              {
+                "name": "Final quality run, error analysis report and decision log",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "Guardrails, observability and cost control",
+            "tasks": [
+              {
+                "name": "Prompt injection and jailbreak filtering on questions and retrieved chunks, off-topic handling",
+                "hours": 14
+              },
+              {
+                "name": "Hallucination guardrails: grounding check and citation validation before answering",
+                "hours": 12
+              },
+              {
+                "name": "Prompt versioning: prompts in the repository, release tags and version logged on every trace",
+                "hours": 6
+              },
+              {
+                "name": "Langfuse self-hosted on ECS Fargate with tracing of retrieval, rerank and generation steps",
+                "hours": 12
+              },
+              {
+                "name": "Token and cost monitoring per user group, budget alarms and dashboards",
+                "hours": 8
+              },
+              {
+                "name": "Rate limits (30 questions per user per hour), Bedrock throttling handling and retries",
+                "hours": 8
+              },
+              {
+                "name": "PII masking in logs and audit trail of answers shown to users",
+                "hours": 6
+              }
+            ]
+          },
+          {
+            "name": "Testing, hardening and release",
+            "tasks": [
+              {
+                "name": "Unit and integration tests for connectors, chunking, permission filters and API (pytest)",
+                "hours": 20
+              },
+              {
+                "name": "Load test: 60 concurrent users, 1,500 questions per day, p95 latency tuning and caching of embeddings and rerank calls",
+                "hours": 14
+              },
+              {
+                "name": "Production deployment, runbook and rollback procedure",
+                "hours": 8
+              },
+              {
+                "name": "Pilot launch: onboarding of 40 engineers, 1-hour training session and user guide",
+                "hours": 8
+              },
+              {
+                "name": "Hypercare for 2 weeks: issue triage, quality monitoring and weekly feedback review",
+                "hours": 14
+              },
+              {
+                "name": "Technical documentation and handover (architecture, runbooks, evaluation guide)",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "Project management",
+            "tasks": [
+              {
+                "name": "Project management: planning, weekly demos and status reports, client coordination with the Microsoft 365 Administrator",
+                "hours": 48
+              },
+              {
+                "name": "Sprint ceremonies and risk tracking",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (15%, driven by answer-quality iterations, ACL fidelity and Microsoft tenant dependencies)",
+                "hours": 116
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Tech Lead / AI engineer",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Backend engineer (data and integrations)",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "Project Manager",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 14,
+          "max_weeks": 16
+        }
+      }
+    },
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call — Multi-tenant SaaS rebuild for RutaFix",
+          "date": "2026-01-22",
+          "duration_minutes": 90,
+          "attendees": {
+            "client": [
+              "CEO and co-founder",
+              "CTO and co-founder",
+              "Head of Customer Success",
+              "Head of Operations (part-time advisor)"
+            ],
+            "us": [
+              "Account Manager",
+              "Tech Lead",
+              "Product Designer",
+              "Security and Compliance Consultant"
+            ]
+          }
+        },
+        "context_and_problem": "RutaFix is a startup that sells scheduling and dispatch software to small HVAC and plumbing companies with 5 to 80 technicians each. Three early customers (about 110 technicians in total) run on a single-tenant prototype deployed once per customer on separate Heroku apps. Each new customer needs about 3 days of manual setup, upgrades are applied three times, billing is done by hand from spreadsheets, and the prototype has no audit trail, no data export and no formal access controls. Two prospects with 60 and 80 technicians have asked for a SOC 2 report before signing, and the sales pipeline holds 25 more companies that cannot be onboarded without self-service signup.",
+        "goal": "Rebuild the product as a multi-tenant SaaS with self-service onboarding, automated subscription billing and the controls needed to obtain a SOC 2 Type I report. Success criteria stated by the client: a new company is live in under 30 minutes without staff involvement, 100 tenants and 2,000 technicians supported on the first production setup, billing fully automated with fewer than 1% of invoices needing manual correction, and a SOC 2 Type I report issued by the end of September 2026.",
+        "in_scope": [
+          "Multi-tenancy on a shared PostgreSQL database with row-level security and acts_as_tenant, subdomain per company, and a cross-tenant isolation test suite.",
+          "Self-service onboarding wizard: signup, company profile, 14-day trial, invitations for users.",
+          "Users and 4 roles (owner, dispatcher, technician, billing admin), email and password login with TOTP two-factor, and SSO with Microsoft Entra ID and Google.",
+          "Per-tenant configuration: business hours, job types, SMS templates, branding and service areas.",
+          "Customers, sites and equipment, with CSV import.",
+          "Job scheduling and technician dispatch: job lifecycle, availability and conflict detection, dispatcher board with drag-and-drop and live updates, map view and nearest-technician suggestions.",
+          "Technician mobile web app as a PWA (8 screens): day view, job status, photos, notes, parts used, customer signature, with queued updates on weak connectivity.",
+          "Customer notifications by SMS (Twilio) and email (Postmark): confirmation, reminder and on-the-way messages, plus a self-service confirm or reschedule link.",
+          "Quotes and invoices with a price book, taxes, PDF output and per-tenant numbering.",
+          "Subscription billing with Stripe: per-technician seats, metered SMS usage, trials, proration and dunning with a read-only mode after the grace period.",
+          "Internal admin console with support impersonation limited by tenant consent and time.",
+          "Per-tenant audit log with viewer, and GDPR data export and deletion workflows.",
+          "SOC 2 Type I readiness: control mapping and evidence collection in Vanta, policies, access reviews, incident response runbook, one external penetration test and support during the auditor's Type I work.",
+          "Operations: backups and restore drills, tenant-aware observability in Datadog, per-tenant rate limiting and queue fairness, load test at 100 tenants and 2,000 technicians.",
+          "Migration of the 3 existing prototype customers into the new schema.",
+          "About 29 designed screens in total (12 dispatcher, 8 technician, 9 onboarding, billing and admin)."
+        ],
+        "out_of_scope": [
+          "Native iOS and Android apps",
+          "Offline-first mode with full local database on the device (only queued status updates are included)",
+          "Accepting customer payments for invoices online (invoices are marked paid manually)",
+          "Accounting integrations such as QuickBooks or Xero",
+          "Inventory and parts stock management",
+          "Public API and webhooks for customers",
+          "SOC 2 Type II observation period and report",
+          "Languages other than English",
+          "Automatic route optimization across many jobs (only nearest-technician suggestions)",
+          "Auditor and penetration test vendor fees (paid by the client)"
+        ],
+        "constraints": [
+          "Budget ceiling communicated by the client: about USD 260k.",
+          "Kickoff on 2026-03-02. General availability for new customers and the SOC 2 Type I report are both targeted for 2026-09-30, about 30 weeks later.",
+          "Data residency: the first production setup runs in a single Heroku Private Space in the US; EU-hosted tenants are out of the first release, so GDPR is covered by export, deletion and processing controls, not by regional hosting",
+          "The CTO is available about 6 h/week for decisions; the Head of Customer Success joins a weekly 1-hour demo.",
+          "Twilio 10DLC brand and campaign approval takes up to 4 weeks and cannot be rushed.",
+          "The auditor books Type I fieldwork 6 weeks ahead, so the control set must be operating by the middle of August.",
+          "Technicians use mid-range phones with unreliable mobile data: main job actions must work in at most 3 taps and tolerate connection loss.",
+          "Target scale at launch: 100 tenants, 2,000 technicians, about 20,000 jobs per day, 500,000 SMS per month."
+        ],
+        "proposed_stack": {
+          "application": "Ruby 3.3 on Rails 7.1, Hotwire (Turbo and Stimulus) for the dispatcher UI and the technician PWA, ViewComponent, Tailwind CSS.",
+          "data_and_jobs": "PostgreSQL 16 with row-level security and the acts_as_tenant pattern, Redis, Sidekiq for background jobs.",
+          "auth": "Devise with TOTP, Microsoft Entra ID and Google SSO through OmniAuth, Pundit for authorization.",
+          "integrations": "Stripe Billing, Twilio SMS, Mapbox maps and routing, Postmark email.",
+          "infra": "Heroku Private Spaces, Heroku Postgres with continuous protection, GitHub Actions, Terraform for the surrounding cloud resources (S3, KMS, IAM, DNS).",
+          "quality_and_compliance": "RSpec, Capybara, Brakeman, Datadog for monitoring, Vanta for SOC 2 evidence collection."
+        },
+        "integrations": [
+          "Stripe Billing: per-seat and metered prices, webhooks, customer portal. The client creates the Stripe account and provides test and live keys.",
+          "Twilio: programmable SMS with 10DLC registration. The client owns the Twilio account and the registration paperwork; we prepare the content.",
+          "Mapbox: geocoding, maps and Matrix API for travel times. The client provides the account and token.",
+          "Postmark: transactional email with a verified sending domain provided by client IT.",
+          "Microsoft Entra ID and Google: OAuth apps registered by each customer's IT team; RutaFix provides the setup guide.",
+          "Vanta: connected to GitHub, Heroku, Datadog, Entra ID and the client's HR system; the client holds the Vanta subscription."
+        ],
+        "assumptions": [
+          "Stripe plans: one per-technician monthly seat price and one metered price per SMS; prices are set by the client and configured, not hard-coded.",
+          "Trial lasts 14 days without a card; after 3 failed payment attempts over 14 days the account becomes read-only.",
+          "Up to 29 distinct screens in the high-fidelity design; RutaFix has a logo and colors but no component library.",
+          "Client feedback within 2 business days, with one consolidated round of changes per weekly demo.",
+          "2 UAT cycles of 1 week each, run with 4 pilot customers.",
+          "The 3 existing customers provide their prototype data as a database dump; up to 50,000 jobs per customer, no cleaning needed beyond validation.",
+          "GDPR deletion removes tenant data within 30 days and from backups within 35 days, which is the retention period of the continuous protection setup.",
+          "SOC 2 policies are written from Vanta templates and adapted by us; the client's CEO signs them and runs the quarterly access review.",
+          "Penetration test is performed by an external firm hired by the client; we fix up to 40 hours of findings within the estimate.",
+          "Hypercare lasts 3 weeks after general availability; support after that is under a separate agreement."
+        ],
+        "risks": [
+          {
+            "level": "HIGH",
+            "description": "Row-level security combined with background jobs, exports and the admin console is easy to get wrong; a single missing tenant context is a data-leak risk, so the isolation test suite must cover every entry point."
+          },
+          {
+            "level": "HIGH",
+            "description": "Stripe billing edge cases (proration on seat changes, late metered usage, webhook ordering, dunning) are numerous and only show up with real calendar time; they are the main driver of rework."
+          },
+          {
+            "level": "HIGH",
+            "description": "The SOC 2 Type I date depends on the auditor's calendar and on process work (policies, access reviews) that needs founder time, not only code."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Twilio 10DLC approval can take up to 4 weeks or be rejected once, which would delay SMS in production."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Migrating the 3 prototype customers means moving live operations; any data mismatch directly affects paying customers."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Dispatcher board with live updates for many dispatchers per tenant may need Turbo Streams and Redis tuning under load."
+          },
+          {
+            "level": "LOW",
+            "description": "As a product company, roadmap changes during the project are likely and will compete with the fixed September date."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery, setup and infrastructure",
+            "tasks": [
+              {
+                "name": "Kickoff, roadmap refinement and backlog grooming for 14 epics",
+                "hours": 12
+              },
+              {
+                "name": "Architecture and ADRs (shared-schema tenancy with RLS, billing domain model, audit log design)",
+                "hours": 14
+              },
+              {
+                "name": "Rails 7.1 app skeleton on Ruby 3.3: Hotwire, ViewComponent, Tailwind CSS, RuboCop",
+                "hours": 12
+              },
+              {
+                "name": "GitHub Actions CI: RSpec, Capybara system tests, Brakeman, bundler-audit",
+                "hours": 12
+              },
+              {
+                "name": "Heroku Private Spaces pipelines: review apps, staging and production, Heroku Postgres with continuous protection, Redis, Sidekiq dynos",
+                "hours": 18
+              },
+              {
+                "name": "Terraform for surrounding cloud resources (S3 buckets for exports and attachments, KMS, IAM, DNS)",
+                "hours": 16
+              },
+              {
+                "name": "Datadog setup: APM, structured logs, dashboards and base alerts for 2 environments",
+                "hours": 16
+              },
+              {
+                "name": "Gap analysis of the single-tenant prototype: schema, data and features to keep",
+                "hours": 12
+              },
+              {
+                "name": "Environment configuration, secrets handling and tenant seed fixtures for staging",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "UX/UI design",
+            "tasks": [
+              {
+                "name": "Interviews with 4 pilot customers (dispatchers and technicians) and journey maps",
+                "hours": 10
+              },
+              {
+                "name": "Design system: Tailwind tokens and ViewComponent library specification",
+                "hours": 14
+              },
+              {
+                "name": "High-fidelity design of the dispatcher UI (12 screens: schedule board, map, jobs, customers)",
+                "hours": 30
+              },
+              {
+                "name": "High-fidelity design of the technician PWA (8 mobile screens)",
+                "hours": 20
+              },
+              {
+                "name": "Design of onboarding, billing and admin console (9 screens)",
+                "hours": 16
+              },
+              {
+                "name": "Clickable prototype and usability tests with 4 pilot customers",
+                "hours": 12
+              },
+              {
+                "name": "Design iterations after feedback and developer handoff",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "Tenancy, identity and platform",
+            "tasks": [
+              {
+                "name": "Multi-tenancy with acts_as_tenant: tenant model, subdomain resolution, tenant context for requests and Sidekiq jobs",
+                "hours": 16
+              },
+              {
+                "name": "PostgreSQL 16 row-level security policies for all tenant tables, session variable plumbing and migration helpers",
+                "hours": 28
+              },
+              {
+                "name": "Tenant-isolation test suite (cross-tenant access specs for models, controllers, jobs and exports)",
+                "hours": 20
+              },
+              {
+                "name": "Company onboarding wizard: signup, company profile, trial start, user invitations",
+                "hours": 24
+              },
+              {
+                "name": "Users and 4 roles (owner, dispatcher, technician, billing admin) with Pundit policies",
+                "hours": 20
+              },
+              {
+                "name": "Authentication with Devise: email and password, TOTP two-factor",
+                "hours": 18
+              },
+              {
+                "name": "SSO with Microsoft Entra ID and Google through OmniAuth, per-tenant domain mapping",
+                "hours": 24
+              },
+              {
+                "name": "Per-tenant configuration: business hours, job types, SMS templates, branding, service areas",
+                "hours": 21
+              },
+              {
+                "name": "Per-tenant API and login rate limiting with Rack::Attack",
+                "hours": 8
+              },
+              {
+                "name": "Migration of the 3 prototype customers into the multi-tenant schema, with dry runs and verification",
+                "hours": 36
+              }
+            ]
+          },
+          {
+            "name": "Scheduling and dispatch",
+            "tasks": [
+              {
+                "name": "Domain model: customers, sites, equipment, jobs, appointments, technicians and skills",
+                "hours": 20
+              },
+              {
+                "name": "Customer and site management with CSV import",
+                "hours": 16
+              },
+              {
+                "name": "Job lifecycle: status machine, job types, priorities, recurring maintenance visits",
+                "hours": 28
+              },
+              {
+                "name": "Scheduling engine: technician availability, working hours, time off, conflict detection",
+                "hours": 30
+              },
+              {
+                "name": "Dispatcher board with Turbo Streams: drag-and-drop scheduling and live updates for several dispatchers",
+                "hours": 48
+              },
+              {
+                "name": "Mapbox integration: geocoding, dispatcher map, technician pins, route matrix for ETAs",
+                "hours": 30
+              },
+              {
+                "name": "Assignment suggestions: nearest qualified technician using Mapbox travel times",
+                "hours": 24
+              },
+              {
+                "name": "Technician PWA: day view, job details, status updates, service worker with queued updates for weak connectivity",
+                "hours": 40
+              },
+              {
+                "name": "Technician PWA: photos, notes, parts used and customer signature capture",
+                "hours": 24
+              },
+              {
+                "name": "Technician location sharing and customer-facing ETA",
+                "hours": 14
+              },
+              {
+                "name": "Notifications: Twilio SMS (confirmation, reminder, on-the-way) and Postmark email templates, opt-out handling, delivery webhooks",
+                "hours": 34
+              },
+              {
+                "name": "Twilio 10DLC brand and campaign registration, per-tenant sender setup",
+                "hours": 12
+              },
+              {
+                "name": "Customer self-service link to confirm or reschedule an appointment",
+                "hours": 20
+              }
+            ]
+          },
+          {
+            "name": "Quotes and invoices",
+            "tasks": [
+              {
+                "name": "Price book, line items and tax rules per tenant",
+                "hours": 16
+              },
+              {
+                "name": "Quotes: creation, PDF, email through Postmark, customer approval link",
+                "hours": 26
+              },
+              {
+                "name": "Invoices: generation from completed jobs, PDF, per-tenant numbering, payment status",
+                "hours": 28
+              }
+            ]
+          },
+          {
+            "name": "Subscription billing with Stripe",
+            "tasks": [
+              {
+                "name": "Stripe Billing model: plans, per-technician seat price, metered SMS price, customer and subscription mapping",
+                "hours": 16
+              },
+              {
+                "name": "Trial signup, Checkout and customer portal integration",
+                "hours": 24
+              },
+              {
+                "name": "Seat count sync with proration on technician add and remove",
+                "hours": 18
+              },
+              {
+                "name": "Metered SMS usage: aggregation job, usage records to Stripe, idempotency and late events",
+                "hours": 28
+              },
+              {
+                "name": "Stripe webhook handling: idempotent, out-of-order safe, with failure replay",
+                "hours": 24
+              },
+              {
+                "name": "Dunning: retry schedule, grace period, read-only account mode, reminder emails",
+                "hours": 26
+              },
+              {
+                "name": "Billing UI: plan, seats, usage, invoices, payment method",
+                "hours": 18
+              },
+              {
+                "name": "Billing edge-case test suite with Stripe test clocks (trial end, proration, failed payment, cancellation)",
+                "hours": 24
+              },
+              {
+                "name": "Billing reconciliation job and monthly finance report",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Admin console, audit and data rights",
+            "tasks": [
+              {
+                "name": "Internal admin console: tenant search, plan overrides, suspension, usage views",
+                "hours": 28
+              },
+              {
+                "name": "Support impersonation with tenant consent, time limit and visible banner",
+                "hours": 22
+              },
+              {
+                "name": "Audit log: per-tenant capture of who, what and when, immutable storage and viewer UI",
+                "hours": 28
+              },
+              {
+                "name": "GDPR data export per tenant and per customer (async job, signed S3 link)",
+                "hours": 22
+              },
+              {
+                "name": "GDPR deletion and retention workflows, including backup retention policy",
+                "hours": 24
+              },
+              {
+                "name": "Support tooling: tenant health page and failed-job replay for Sidekiq",
+                "hours": 11
+              }
+            ]
+          },
+          {
+            "name": "Security and SOC 2 Type I readiness",
+            "tasks": [
+              {
+                "name": "SOC 2 scoping, trust criteria selection and control mapping in Vanta",
+                "hours": 24
+              },
+              {
+                "name": "Vanta integrations (GitHub, Heroku, Datadog, Entra ID, HR system) and evidence automation",
+                "hours": 22
+              },
+              {
+                "name": "Policy set, risk assessment, vendor reviews, onboarding and offboarding procedures",
+                "hours": 28
+              },
+              {
+                "name": "Access review process, least-privilege access, MFA enforcement and secret rotation",
+                "hours": 18
+              },
+              {
+                "name": "Change management and incident response runbooks with one tabletop exercise",
+                "hours": 14
+              },
+              {
+                "name": "External penetration test coordination and remediation of findings",
+                "hours": 24
+              },
+              {
+                "name": "Application hardening: CSP, field encryption for sensitive data, Brakeman cleanup",
+                "hours": 18
+              },
+              {
+                "name": "Type I audit support: auditor walkthroughs and evidence requests",
+                "hours": 22
+              }
+            ]
+          },
+          {
+            "name": "Operations and performance",
+            "tasks": [
+              {
+                "name": "Backups and restore drills, including per-tenant restore procedure",
+                "hours": 20
+              },
+              {
+                "name": "Tenant-aware observability: Datadog tenant tags, SLO dashboards, Sidekiq queue monitoring",
+                "hours": 14
+              },
+              {
+                "name": "Sidekiq queue design for per-tenant fairness and throttling of SMS and export jobs",
+                "hours": 12
+              },
+              {
+                "name": "Load testing (100 tenants, 2,000 technicians) and query tuning",
+                "hours": 14
+              }
+            ]
+          },
+          {
+            "name": "Quality assurance",
+            "tasks": [
+              {
+                "name": "RSpec model and service tests (scheduling engine, billing, tenancy)",
+                "hours": 44
+              },
+              {
+                "name": "RSpec request and policy specs for all role and tenant combinations",
+                "hours": 24
+              },
+              {
+                "name": "Capybara system tests for dispatcher board, onboarding and technician PWA flows",
+                "hours": 32
+              },
+              {
+                "name": "Device testing of the PWA on iOS Safari and Android Chrome",
+                "hours": 18
+              },
+              {
+                "name": "Manual QA and regression (2 cycles)",
+                "hours": 30
+              },
+              {
+                "name": "UAT support and bug fixing with pilot customers (2 cycles of 1 week)",
+                "hours": 37
+              }
+            ]
+          },
+          {
+            "name": "Launch and handover",
+            "tasks": [
+              {
+                "name": "Production cutover runbook, pilot tenant go-live and rollback plan",
+                "hours": 16
+              },
+              {
+                "name": "Documentation: help center articles, admin runbooks, on-call guide",
+                "hours": 18
+              },
+              {
+                "name": "Training for the support team and 2 customer webinars",
+                "hours": 10
+              },
+              {
+                "name": "Hypercare (3 weeks): bug fixing and on-call support",
+                "hours": 31
+              }
+            ]
+          },
+          {
+            "name": "Project management",
+            "tasks": [
+              {
+                "name": "Project management, weekly demos, status reports, roadmap and stakeholder coordination (~9%)",
+                "hours": 165
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (12%, driven by Stripe billing edge cases, 10DLC approval timing and SOC 2 audit scheduling)",
+                "hours": 220
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Senior Rails developer / Tech Lead",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Rails developer",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Product Designer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "Project Manager",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 24,
+          "max_weeks": 28
+        }
+      }
+    },
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call - Class Booking Mobile App for Studio Ritmo",
+          "date": "2026-01-14",
+          "duration_minutes": 70,
+          "attendees": {
+            "client": [
+              "Founder and CEO",
+              "Operations Manager",
+              "Head of Front Desk",
+              "Marketing Lead"
+            ],
+            "us": [
+              "Account Manager",
+              "Tech Lead",
+              "Product Designer"
+            ]
+          }
+        },
+        "context_and_problem": "Studio Ritmo is a chain of 6 boutique fitness studios (yoga, cycling, pilates) with about 9,000 active members and around 450 classes per week. Members book through a WhatsApp group and a basic web form, and front-desk staff reconcile payments by hand. Reported pain points: about 18% of booked spots are no-shows, double bookings happen several times a week, waitlists are managed on paper, front desks spend about 25 hours per week in total reconciling class packs and monthly payments, and there is no way to remind members of their classes.",
+        "goal": "Launch a branded iOS and Android app where members book classes, join waitlists, buy class packs and monthly memberships, and check in with a QR code, plus a lightweight staff web panel to run schedules and attendance. Success criteria stated by the client: 60% of bookings made in the app within 3 months of launch, no-shows reduced from 18% to under 10%, and front-desk reconciliation time cut by 70%.",
+        "in_scope": [
+          "Flutter 3 app for iOS and Android (shared code base) with about 22 screens, in Spanish and English.",
+          "Sign-up and login with email, Apple and Google; profile and booking history.",
+          "Class schedule across 6 studios with filters by studio, class type and instructor.",
+          "Booking and cancellation with a configurable cancellation window (default 12 hours) and late-cancel penalty that consumes the credit.",
+          "Waitlists with automatic promotion and a 30-minute claim window.",
+          "Class packs (5, 10 and 20 classes, with expiry) and monthly memberships (unlimited and 8 classes per month) paid with Stripe: cards, Apple Pay and Google Pay, including 3-D Secure challenges.",
+          "Push reminders 24 hours and 2 hours before class, plus waitlist and payment-failure notifications, and 5 transactional email templates through SendGrid.",
+          "QR check-in: the member shows a QR code, staff scan it from the panel.",
+          "Deep links from notifications and emails to a class or booking.",
+          "Staff web panel in Vue 3 (about 8 screens): classes and instructors, recurring schedules, attendance roster and check-in, member lookup, manual credit adjustments and refunds, plans and pricing, and 4 reports with CSV export.",
+          "One-time import of about 9,000 member records from the web form export, with invitation emails.",
+          "Store release for both platforms: listings in Spanish and English, privacy labels, data safety form, beta with about 30 testers and 2 feedback cycles.",
+          "3 weeks of hypercare after launch."
+        ],
+        "out_of_scope": [
+          "Instructor mobile app (instructors use the staff panel)",
+          "Retail or merchandise sales",
+          "Corporate and B2B packages",
+          "Social features, ratings and challenges",
+          "Wearable integrations and Apple Health",
+          "In-person card terminals and point-of-sale",
+          "Accounting system integration",
+          "Tablet-optimized layouts",
+          "Web version of the member app",
+          "Migration of payment history from the old process"
+        ],
+        "constraints": [
+          "Budget ceiling communicated informally: about USD 70k.",
+          "Kickoff on 2026-02-02; the client wants the app public in the stores within 5 months of kickoff, so the public launch is planned for the week of 2026-06-01, leaving about one month of margin.",
+          "Member data and card data: card data is handled only by Stripe; personal data is stored in the Firebase europe-west region the client selected for GDPR-style compliance.",
+          "The Operations Manager is available about 4 hours per week; one weekly 45-minute demo with the CEO and front-desk lead.",
+          "Usability: a member must be able to book a class in at most 3 taps from the home screen.",
+          "Target scale: 9,000 members, up to 1,500 concurrent users at peak booking time (classes open at 7 pm the evening before), about 450 classes per week.",
+          "Supported OS: iOS 16 and later, Android 11 and later."
+        ],
+        "proposed_stack": {
+          "mobile": "Flutter 3 (Dart), Riverpod for state, go_router, Firebase Cloud Messaging, flutter_stripe, Fastlane for builds and store uploads.",
+          "backend": "Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Cloud Scheduler; Stripe Billing webhooks; SendGrid for email.",
+          "staff_panel": "Vue 3, Vite, Pinia, Vuetify, hosted on Firebase Hosting.",
+          "quality": "Flutter integration tests, Firebase Emulator Suite, Firebase Crashlytics, GitHub Actions, Firebase App Distribution for beta testers.",
+          "environments": "3 Firebase projects: dev, staging and production."
+        },
+        "integrations": [
+          "Stripe: cards, Apple Pay, Google Pay and Stripe Billing for memberships; the client creates the Stripe account and provides live keys at the start of the beta.",
+          "SendGrid: transactional email; the client provides a verified sending domain (DNS access by their IT contractor).",
+          "Apple App Store and Google Play: the client holds the developer accounts (organization enrollment started at kickoff); we publish on their behalf.",
+          "Firebase Cloud Messaging for push, with an APNs key provided by the client's Apple account."
+        ],
+        "assumptions": [
+          "About 22 mobile screens and 8 staff panel screens in the high-fidelity design; the client provides the logo and brand colors and has no formal brand guide.",
+          "One consolidated round of design changes per demo; client feedback within 2 business days.",
+          "Pricing rules (3 pack sizes, 2 membership types, 12-hour cancellation window) are final and configurable only by staff in the panel.",
+          "3 environments: dev, staging and production.",
+          "Store review: up to 2 rejection iterations allowed per platform; the client has D-U-N-S numbers and organization accounts ready by week 3.",
+          "The beta uses 2 feedback cycles of 1 week with about 30 members and staff.",
+          "Member records are exported by the client as a CSV file within 3 weeks of kickoff; members receive an invitation email and set a password or sign in with Apple or Google.",
+          "4 staff reports: attendance, revenue, pack usage and no-shows.",
+          "Support after launch: 3 weeks of hypercare included; afterwards a separate maintenance agreement."
+        ],
+        "risks": [
+          {
+            "level": "HIGH",
+            "description": "App Store and Google Play review rejections (payments, account deletion, privacy labels) can add days to the launch; mitigated by submitting the first beta build to TestFlight by week 10."
+          },
+          {
+            "level": "HIGH",
+            "description": "Peak booking load at 7 pm: many members compete for the same spots, which stresses Firestore transactions and can cause contention and cost spikes."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Stripe Billing edge cases (3-D Secure failures, proration on plan change, failed renewals) need many test scenarios and can take longer than planned."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Firestore cost grows with reads on schedule screens; requires denormalization and caching, and budget alerts from the first beta."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Delays in the client creating Apple and Google organization accounts (D-U-N-S verification) can block TestFlight and Play testing tracks."
+          },
+          {
+            "level": "LOW",
+            "description": "Device and OS fragmentation on Android 11 to 15 may reveal UI or push notification differences late in testing."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery, setup and infrastructure",
+            "tasks": [
+              {
+                "name": "Kickoff, requirements refinement and backlog grooming",
+                "hours": 12
+              },
+              {
+                "name": "Architecture and ADRs (Firestore data model, credit ledger, Stripe billing model, security rules approach)",
+                "hours": 12
+              },
+              {
+                "name": "Firebase projects for 3 environments (dev, staging, prod): IAM, budget alerts, Cloud Scheduler and SendGrid setup",
+                "hours": 12
+              },
+              {
+                "name": "Flutter 3 project setup: Riverpod, go_router, dev/staging/prod flavors, lint rules and shared widgets package",
+                "hours": 14
+              },
+              {
+                "name": "CI/CD with GitHub Actions: Flutter tests, Functions and Vue panel deploy to Firebase Hosting",
+                "hours": 14
+              },
+              {
+                "name": "Fastlane lanes for iOS and Android builds, signing, Firebase App Distribution and store uploads",
+                "hours": 12
+              },
+              {
+                "name": "Firebase Emulator Suite setup with seed data for studios, classes and members",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "UX/UI design",
+            "tasks": [
+              {
+                "name": "User flows and wireframes for booking, waitlist, purchase, check-in and profile",
+                "hours": 14
+              },
+              {
+                "name": "Design system for Flutter: tokens, light/dark themes, base widgets for iOS and Android",
+                "hours": 14
+              },
+              {
+                "name": "High-fidelity design of ~22 mobile screens",
+                "hours": 30
+              },
+              {
+                "name": "High-fidelity design of ~8 staff panel screens",
+                "hours": 10
+              },
+              {
+                "name": "Clickable prototype and usability test with 8 members",
+                "hours": 8
+              },
+              {
+                "name": "App icon, splash screen and onboarding illustrations",
+                "hours": 6
+              }
+            ]
+          },
+          {
+            "name": "Backend (Firebase and Cloud Functions)",
+            "tasks": [
+              {
+                "name": "Firestore data model and indexes for studios, classes, bookings, members, passes and memberships",
+                "hours": 14
+              },
+              {
+                "name": "Firebase Authentication: email, Apple and Google sign-in, custom claims for 4 roles",
+                "hours": 14
+              },
+              {
+                "name": "Firestore security rules for 4 roles with rule unit tests on the emulator",
+                "hours": 20
+              },
+              {
+                "name": "Class schedule functions: recurring class generation with Cloud Scheduler, instructor and studio assignment",
+                "hours": 16
+              },
+              {
+                "name": "Transactional booking function: capacity, cancellation window and late-cancel rules",
+                "hours": 20
+              },
+              {
+                "name": "Waitlist engine: automatic promotion, claim window and expiry",
+                "hours": 16
+              },
+              {
+                "name": "Class pack and credit ledger: consumption, expiry, refunds and manual adjustments",
+                "hours": 20
+              },
+              {
+                "name": "Stripe PaymentIntents for class packs with SCA/3DS, Apple Pay and Google Pay",
+                "hours": 18
+              },
+              {
+                "name": "Stripe Billing for monthly memberships: webhooks, idempotency, failed-payment retries and dunning emails",
+                "hours": 22
+              },
+              {
+                "name": "QR check-in token generation and validation function",
+                "hours": 10
+              },
+              {
+                "name": "Scheduled FCM reminders (24 h and 2 h) and 5 SendGrid transactional email templates",
+                "hours": 18
+              },
+              {
+                "name": "Firestore cost control: read budgets, denormalized counters, caching and billing alerts",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "Mobile app (Flutter)",
+            "tasks": [
+              {
+                "name": "App shell, go_router navigation, Riverpod providers and Firestore repositories",
+                "hours": 14
+              },
+              {
+                "name": "Onboarding, sign-up and login (email, Apple, Google), password reset",
+                "hours": 20
+              },
+              {
+                "name": "Class schedule with filters by studio, class type and instructor",
+                "hours": 22
+              },
+              {
+                "name": "Class detail, booking, cancellation and waitlist flows",
+                "hours": 22
+              },
+              {
+                "name": "Class pack and membership purchase with flutter_stripe, Apple Pay, Google Pay and SCA challenges",
+                "hours": 24
+              },
+              {
+                "name": "Payment methods, receipts and membership management (pause, cancel)",
+                "hours": 16
+              },
+              {
+                "name": "My bookings, attendance history and profile screens",
+                "hours": 16
+              },
+              {
+                "name": "Member QR check-in screen with brightness and screen-wake handling",
+                "hours": 10
+              },
+              {
+                "name": "Push notifications: FCM setup, permission prompts, notification channels and routing to class or booking",
+                "hours": 20
+              },
+              {
+                "name": "Deep links with universal links and Android App Links",
+                "hours": 10
+              },
+              {
+                "name": "Spanish and English localization of ~22 screens",
+                "hours": 8
+              },
+              {
+                "name": "Loading, empty, error and poor-connection states; accessibility pass",
+                "hours": 14
+              },
+              {
+                "name": "Crashlytics and analytics events setup",
+                "hours": 8
+              },
+              {
+                "name": "Platform-specific work: Apple Pay merchant ID and entitlements, iOS permissions, Android adaptive icons and 14 OS versions",
+                "hours": 14
+              }
+            ]
+          },
+          {
+            "name": "Staff web panel (Vue 3)",
+            "tasks": [
+              {
+                "name": "Vue 3, Vite, Pinia and Vuetify setup with Firebase Auth and role guards",
+                "hours": 12
+              },
+              {
+                "name": "Class and instructor management with recurring schedules",
+                "hours": 18
+              },
+              {
+                "name": "Attendance roster with QR scan by webcam and manual check-in",
+                "hours": 14
+              },
+              {
+                "name": "Member lookup, bookings, manual credit adjustments and refunds",
+                "hours": 16
+              },
+              {
+                "name": "4 reports (attendance, revenue, pack usage, no-shows) with CSV export",
+                "hours": 12
+              },
+              {
+                "name": "Plans and pricing management for packs and memberships",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "Quality assurance",
+            "tasks": [
+              {
+                "name": "Cloud Functions unit and emulator tests, including Stripe webhook scenarios",
+                "hours": 20
+              },
+              {
+                "name": "Flutter unit and widget tests",
+                "hours": 20
+              },
+              {
+                "name": "Flutter integration tests for booking, purchase and check-in flows",
+                "hours": 18
+              },
+              {
+                "name": "Staff panel component and smoke tests",
+                "hours": 8
+              },
+              {
+                "name": "Device matrix testing on 8 devices (iOS 16-18, Android 11-15)",
+                "hours": 18
+              },
+              {
+                "name": "Payment testing with Stripe test clocks, SCA challenges and failed payments",
+                "hours": 12
+              },
+              {
+                "name": "Security review: rules, Functions authorization, secrets and mobile checklist",
+                "hours": 12
+              },
+              {
+                "name": "Load and Firestore cost test for peak booking at 9,000 members",
+                "hours": 8
+              }
+            ]
+          },
+          {
+            "name": "Store release, migration and handover",
+            "tasks": [
+              {
+                "name": "Apple Developer and Google Play Console setup, organization verification, Apple Pay merchant ID",
+                "hours": 8
+              },
+              {
+                "name": "Store listings: screenshots, ES/EN descriptions, privacy labels and data safety forms",
+                "hours": 14
+              },
+              {
+                "name": "Beta with TestFlight and Firebase App Distribution for ~30 testers, 2 feedback cycles",
+                "hours": 16
+              },
+              {
+                "name": "Store review submissions with allowance for 2 rejection iterations",
+                "hours": 12
+              },
+              {
+                "name": "Import of ~9,000 member records from the web form export and invitation emails",
+                "hours": 14
+              },
+              {
+                "name": "Production deployment, staged rollout, Crashlytics alerts and runbook",
+                "hours": 12
+              },
+              {
+                "name": "Staff training (2 sessions for 6 studios), admin guide and member FAQ",
+                "hours": 14
+              },
+              {
+                "name": "Hypercare for 3 weeks after launch",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Project management",
+            "tasks": [
+              {
+                "name": "Project management, weekly demos, status reports and client coordination (~7%)",
+                "hours": 76
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (15%, driven by Apple/Google review cycles, SCA payment flows and Firestore cost uncertainty)",
+                "hours": 144
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Tech Lead / senior Flutter developer",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Backend developer (Firebase, TypeScript, Vue)",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "Product Designer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "Project Manager / QA coordinator",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 14,
+          "max_weeks": 17
+        }
+      }
+    },
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call - Retail Analytics Platform for Mercado Verde",
+          "date": "2026-05-12",
+          "duration_minutes": 90,
+          "attendees": {
+            "client": [
+              "CFO",
+              "Head of Category Management",
+              "Head of Store Operations",
+              "Marketing and Loyalty Manager",
+              "IT Manager (one person, part-time)"
+            ],
+            "us": [
+              "Account Manager",
+              "Lead Data Engineer",
+              "Analytics Engineer"
+            ]
+          }
+        },
+        "context_and_problem": "Mercado Verde is a supermarket chain with 40 stores, about 1,800 employees and about 85,000 sales tickets per day. Sales, inventory, purchasing and loyalty data live in 9 sources: a SQL Server database in each store POS, a central Oracle ERP, a Shopify online store, the loyalty app and 5 supplier price files delivered by SFTP in different formats. Finance and category teams build their reports by hand in Excel, the monthly close takes 6 working days, and the same KPI (for example gross margin) differs by up to 3 points between departments because each team defines it differently.",
+        "goal": "Build a central analytics platform on Azure that ingests the 9 sources into a lakehouse, models sales, inventory, margin and loyalty with one agreed definition per metric, tests data quality, and serves 12 Power BI dashboards to four teams (finance, category and purchasing, store operations, marketing and loyalty). Success criteria stated by the client: one signed definition for each core KPI, sales reconciled with finance within 0.1%, data available by 06:00 every day, and the monthly close reporting reduced from 6 to 2 working days.",
+        "in_scope": [
+          "Ingestion of the store POS SQL Servers (40 stores) with a self-hosted integration runtime, incremental loads by watermark.",
+          "Ingestion of the Oracle ERP: purchasing, inventory, item master and suppliers.",
+          "Python loaders for the Shopify API and the loyalty app REST API.",
+          "SFTP loaders for 5 supplier price file formats with schema validation and quarantine of invalid files.",
+          "Historical backfill of 24 months of POS and ERP data.",
+          "Lakehouse on Azure Databricks with PySpark and Delta Lake in bronze, silver and gold layers on ADLS Gen2, governed with Unity Catalog.",
+          "Dimensional model and metric models in dbt Core on Databricks SQL: sales, inventory, purchasing, margin and loyalty.",
+          "4 definition workshops with finance and category teams and a signed business glossary.",
+          "Data contracts per source and Great Expectations checks on 15 critical tables.",
+          "3 Power BI semantic models and 12 dashboards (3 per team), with row-level security by store region.",
+          "3 environments (dev, test, prod) with Terraform, Azure DevOps pipelines and Power BI deployment pipelines.",
+          "2 UAT cycles, a parallel run against the Excel reports for one month close, training sessions for the 4 teams and 3 weeks of hypercare."
+        ],
+        "out_of_scope": [
+          "Any application UI or custom web portal.",
+          "Real-time or streaming dashboards (the daily batch is enough).",
+          "Machine learning models such as demand forecasting or price optimization.",
+          "Self-service data preparation training beyond the 4 sessions.",
+          "Replacing or changing the source systems (POS, ERP, Shopify, loyalty app).",
+          "Power BI licenses and Azure subscription costs (paid by the client).",
+          "Cleaning of source data errors inside the source systems."
+        ],
+        "constraints": [
+          "Budget ceiling communicated informally: about USD 140k.",
+          "Kickoff on 2026-06-01 and go-live by 2026-10-16, about 4.5 months, before the Q4 planning cycle.",
+          "Data residency: all data stays in the Azure Brazil South region.",
+          "The IT Manager is available about 4 h/week; business stakeholders attend one weekly 1-hour review.",
+          "Store networks are connected by VPN to headquarters; the POS databases can only be queried outside trading hours (22:00 to 05:00).",
+          "Target scale: about 85,000 tickets per day, 24 months of history (about 1.5 billion ticket lines) and a daily load finished by 06:00.",
+          "Loyalty customer data is personal data and must be masked for roles that do not need it."
+        ],
+        "proposed_stack": {
+          "ingestion": "Azure Data Factory with a self-hosted integration runtime for the store SQL Servers and the Oracle ERP, Python loaders for the Shopify API and the supplier SFTP files.",
+          "lakehouse": "Azure Databricks with PySpark and Delta Lake (bronze, silver, gold) on ADLS Gen2, Unity Catalog for governance.",
+          "modeling": "dbt Core on Databricks SQL, Great Expectations checks on critical tables.",
+          "bi": "Power BI (semantic models, row-level security by store region), Power BI deployment pipelines.",
+          "infra": "Terraform, Azure DevOps pipelines, Azure Monitor, Azure Key Vault."
+        },
+        "integrations": [
+          "Store POS (SQL Server in each of the 40 stores): read-only access through the self-hosted integration runtime, accounts provided by client IT.",
+          "Oracle ERP: read-only schema access from the integration runtime, provided by the ERP administrator.",
+          "Shopify: Admin API with a custom app token created by the client.",
+          "Loyalty app: REST API with a service account provided by the app vendor.",
+          "Supplier price files: 5 suppliers deliver files by SFTP daily or weekly; the client provides the SFTP credentials and sample files."
+        ],
+        "assumptions": [
+          "Client confirms access to all 9 sources within 2 weeks of kickoff.",
+          "Exactly 12 dashboards and 3 semantic models, 3 dashboards for each of the 4 teams.",
+          "Two review rounds on the dashboards and 2 UAT cycles of 1 week each, executed by the client.",
+          "Metric definitions are agreed in 4 workshops; changes after the signed glossary go through change control.",
+          "Source data errors are reported to the client and not fixed in the sources; known issues are quarantined and listed in a data quality report.",
+          "Daily batch refresh; Power BI semantic models refresh once a day after the gold layer finishes.",
+          "Row-level security is by store region (5 regions), with a fixed mapping of users to regions provided by the client.",
+          "Support after the 3 weeks of hypercare is out of this estimate and handled under a separate agreement."
+        ],
+        "risks": [
+          {
+            "level": "HIGH",
+            "description": "Quality and consistency of the store POS data: 40 databases with slightly different schemas and local fixes make unification slower than planned."
+          },
+          {
+            "level": "HIGH",
+            "description": "Disagreement between departments on metric definitions (especially margin and supplier rebates) can delay modeling and dashboards."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "The POS query window is limited to non-trading hours, so a slow or failed night load can miss the 06:00 target."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Supplier price files change format without notice, which breaks the SFTP loaders."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Delayed access to the Oracle ERP or to the store networks from the integration runtime."
+          },
+          {
+            "level": "LOW",
+            "description": "Databricks and Power BI capacity costs grow beyond the client's expectations after the historical backfill."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery, setup and infrastructure",
+            "tasks": [
+              {
+                "name": "Kickoff, source inventory and data discovery workshops for the 9 sources",
+                "hours": 20
+              },
+              {
+                "name": "Architecture decisions: medallion layers, naming, environments, data contracts, Unity Catalog model",
+                "hours": 12
+              },
+              {
+                "name": "Terraform for Azure (ADLS Gen2, Databricks workspaces, Data Factory, Key Vault, networking) for dev, test and prod",
+                "hours": 30
+              },
+              {
+                "name": "Unity Catalog setup: metastore, catalogs per layer and environment, access groups",
+                "hours": 12
+              },
+              {
+                "name": "Azure DevOps pipelines: Terraform, dbt build and test, Databricks asset deployment, Power BI deployment pipelines",
+                "hours": 24
+              },
+              {
+                "name": "Azure Monitor and Log Analytics alerts, cost budgets and tagging",
+                "hours": 12
+              },
+              {
+                "name": "Self-hosted integration runtime installation and firewall setup to the 40 store SQL Servers and the Oracle ERP",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Ingestion and bronze layer",
+            "tasks": [
+              {
+                "name": "Data Factory pipelines for the store POS SQL Servers (40 stores), parameterized, incremental by watermark",
+                "hours": 36
+              },
+              {
+                "name": "Data Factory extraction from the Oracle ERP (purchasing, inventory, item master, suppliers), incremental with change detection",
+                "hours": 32
+              },
+              {
+                "name": "Python loader for the Shopify API (orders, products, customers) with pagination, rate limiting and retries",
+                "hours": 24
+              },
+              {
+                "name": "Python loader for the loyalty app REST API (members, points, redemptions)",
+                "hours": 20
+              },
+              {
+                "name": "SFTP loaders for 5 supplier price file formats (CSV, XLSX, fixed width) with schema validation and quarantine of bad files",
+                "hours": 32
+              },
+              {
+                "name": "Bronze Delta tables with ingestion metadata and schema drift handling in PySpark",
+                "hours": 24
+              },
+              {
+                "name": "Historical backfill of 24 months of POS and ERP data in chunks, with row-count reconciliation to the sources",
+                "hours": 28
+              },
+              {
+                "name": "Orchestration in Data Factory: dependencies, retries and a daily load finished before 06:00",
+                "hours": 16
+              },
+              {
+                "name": "Data contracts per source (schema, expected volume, freshness) as YAML with enforcement on load",
+                "hours": 12
+              },
+              {
+                "name": "Pipeline observability: run log table, freshness monitoring and alerts",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Silver layer (Databricks and PySpark)",
+            "tasks": [
+              {
+                "name": "Silver POS transactions: cleansing, deduplication, store timezone normalization, voids and returns",
+                "hours": 28
+              },
+              {
+                "name": "Silver ERP: inventory movements, purchase orders and item master with SCD type 2 history",
+                "hours": 26
+              },
+              {
+                "name": "Silver Shopify orders and loyalty events",
+                "hours": 18
+              },
+              {
+                "name": "Supplier price harmonization and product matching by SKU and EAN",
+                "hours": 24
+              },
+              {
+                "name": "Conformed master data: product, store and supplier with cross-system key mapping",
+                "hours": 24
+              },
+              {
+                "name": "Delta tuning: partitioning, Z-order, OPTIMIZE and VACUUM jobs, cluster policies and cost sizing",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "Gold layer and modeling (dbt Core on Databricks SQL)",
+            "tasks": [
+              {
+                "name": "4 definition workshops with finance and category teams and a signed glossary (margin, net sales, stock days of cover)",
+                "hours": 32
+              },
+              {
+                "name": "dbt project setup on Databricks SQL: conventions, macros, documentation site, slim CI builds",
+                "hours": 16
+              },
+              {
+                "name": "Dimensional model: product, store, date, supplier, customer and loyalty tier dimensions",
+                "hours": 22
+              },
+              {
+                "name": "Sales fact at ticket line level including discounts and returns",
+                "hours": 24
+              },
+              {
+                "name": "Inventory snapshot and stock movement facts, days of cover",
+                "hours": 22
+              },
+              {
+                "name": "Purchasing fact and supplier price variance models",
+                "hours": 18
+              },
+              {
+                "name": "Gross margin and margin waterfall models including supplier rebates",
+                "hours": 28
+              },
+              {
+                "name": "Loyalty models: member activity, cohorts and RFM segments",
+                "hours": 18
+              },
+              {
+                "name": "Pre-aggregated marts for dashboard performance",
+                "hours": 10
+              },
+              {
+                "name": "dbt generic and singular tests and model documentation",
+                "hours": 20
+              }
+            ]
+          },
+          {
+            "name": "Data quality and governance",
+            "tasks": [
+              {
+                "name": "Great Expectations suites on 15 critical tables with checkpoints in Databricks workflows",
+                "hours": 24
+              },
+              {
+                "name": "Reconciliation reports against POS, ERP and finance monthly close (sales within 0.1%)",
+                "hours": 22
+              },
+              {
+                "name": "PII protection for loyalty customers: Unity Catalog column masks and access policies",
+                "hours": 16
+              },
+              {
+                "name": "Lineage review and data catalog documentation",
+                "hours": 10
+              }
+            ]
+          },
+          {
+            "name": "Power BI",
+            "tasks": [
+              {
+                "name": "Requirements workshops with the 4 teams and wireframes for 12 dashboards",
+                "hours": 18
+              },
+              {
+                "name": "3 semantic models (sales and margin, inventory and purchasing, loyalty and e-commerce) with DAX measures over Databricks SQL",
+                "hours": 40
+              },
+              {
+                "name": "Row-level security by store region with test cases",
+                "hours": 12
+              },
+              {
+                "name": "Report theme, templates and navigation standards",
+                "hours": 8
+              },
+              {
+                "name": "Finance dashboards (3)",
+                "hours": 32
+              },
+              {
+                "name": "Category and purchasing dashboards (3)",
+                "hours": 36
+              },
+              {
+                "name": "Store operations dashboards (3)",
+                "hours": 32
+              },
+              {
+                "name": "Marketing and loyalty dashboards (3)",
+                "hours": 32
+              },
+              {
+                "name": "Performance tuning: aggregations, query reduction and refresh schedules",
+                "hours": 12
+              },
+              {
+                "name": "Power BI deployment pipelines (dev, test, prod), workspaces and gateway configuration",
+                "hours": 14
+              },
+              {
+                "name": "2 review rounds with the 4 teams and resulting changes",
+                "hours": 16
+              }
+            ]
+          },
+          {
+            "name": "Quality assurance, release and support",
+            "tasks": [
+              {
+                "name": "Test strategy and end-to-end pipeline tests in the test environment",
+                "hours": 16
+              },
+              {
+                "name": "Performance test of the daily load and peak month volumes",
+                "hours": 10
+              },
+              {
+                "name": "Security review: network, secrets, PII and access",
+                "hours": 10
+              },
+              {
+                "name": "2 UAT cycles with the 4 teams and defect fixing",
+                "hours": 30
+              },
+              {
+                "name": "Parallel run of dashboards against the Excel reports for one month close",
+                "hours": 20
+              },
+              {
+                "name": "Production cut-over and operational runbooks",
+                "hours": 12
+              },
+              {
+                "name": "Training sessions for the 4 teams and user documentation",
+                "hours": 16
+              },
+              {
+                "name": "Hypercare for 3 weeks after go-live",
+                "hours": 20
+              }
+            ]
+          },
+          {
+            "name": "Project management",
+            "tasks": [
+              {
+                "name": "Planning, weekly status with the client, steering meetings and risk tracking",
+                "hours": 70
+              },
+              {
+                "name": "Stakeholder coordination for source access and reconciliation sign-offs",
+                "hours": 40
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (11% of subtotal): source data quality surprises, store and Oracle network access, definition disputes between departments",
+                "hours": 139
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Lead data engineer (architect)",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Analytics engineer (dbt and Power BI)",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": "Project Manager",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 16,
+          "max_weeks": 20
+        }
+      }
+    },
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call — Policy administration system modernization for Seguros Andina",
+          "date": "2026-01-20",
+          "duration_minutes": 90,
+          "attendees": {
+            "client": [
+              "Chief Operating Officer",
+              "Head of Underwriting",
+              "Head of IT",
+              "Senior Developer (legacy system owner)",
+              "Developer (legacy system co-owner)"
+            ],
+            "us": [
+              "Account Manager",
+              "Tech Lead",
+              "Solutions Architect"
+            ]
+          }
+        },
+        "context_and_problem": "Seguros Andina is an insurance broker with 120 employees and about 85,000 active policies. Its policy administration system is a 12-year-old monolith built on .NET Framework 4.6 and Web Forms, backed by a SQL Server database with about 400 tables and 600 stored procedures. Only two developers understand it, there is no automated test suite, and every release needs a full weekend of manual deployment and checking. Last year 3 of 9 releases needed a rollback or an emergency hotfix, and the business has stopped asking for changes because they are too risky. Month-end closing requires the system to be available without interruption.",
+        "goal": "Modernize the system incrementally with the strangler pattern, without adding new features. Policy issuance, endorsements and renewals move to .NET 8 services behind an API gateway, and the broker-facing screens move to Angular, in 3 releases. Success criteria stated by the client: zero downtime during month-end closing windows, every release deployed on a weekday evening in under 2 hours, no unexplained differences between old and new in the parallel-run reconciliation reports before each cutover, and at least one client developer able to maintain each migrated module.",
+        "in_scope": [
+          "Reverse engineering of the issuance, endorsement and renewal flows (about 150 stored procedures and 14 Web Forms screens) and a written specification of their business rules.",
+          "Characterization tests (xUnit with Verify snapshots) covering about 120 issuance, 80 endorsement and 60 renewal scenarios, plus golden-master tests for premium and tariff calculation.",
+          "Playwright UI regression suite for the 14 legacy screens in scope.",
+          "YARP API gateway in front of the legacy application, with routing by screen and by broker group and feature flags for gradual cutover.",
+          "Synchronization between legacy and new code using SQL Server Change Data Capture on 60 tables, RabbitMQ with MassTransit, and write-back to the legacy tables while old screens still run.",
+          "Three .NET 8 services (policy issuance, endorsements, renewals) with ASP.NET Core Web API, Entity Framework Core and MediatR, including premium and tariff calculation and policy certificate PDFs with parity to the legacy output.",
+          "Angular 17 application with NgRx and Angular Material replacing 14 screens: policy search and list (2), issuance wizard (5), endorsements (3), renewals (3) and policy detail (1).",
+          "Custom reconciliation tool and 3 parallel runs of 4 weeks each, one before each release cutover.",
+          "Four environments (dev, test, staging, production) in the client's VMware datacenter, Azure DevOps pipelines, Octopus Deploy and Seq with Serilog.",
+          "Three incremental releases with cutover runbooks, rollback plans, 2 weeks of hypercare each, and 3 UAT cycles of 1 week.",
+          "Documentation, pairing with the 2 client developers and 6 broker training sessions."
+        ],
+        "out_of_scope": [
+          "New features or changes to business rules, including new products and tariffs",
+          "Migration of the other modules (accounting, commissions, claims, reporting), which stay on the legacy system",
+          "Replacement of SQL Server or any change to the system-of-record database",
+          "Cloud migration; everything stays in the client's datacenter",
+          "Native mobile apps or a broker self-service portal",
+          "Rewrite of the legacy stored procedures that are not part of issuance, endorsements and renewals",
+          "Data cleansing of historical policies beyond what the reconciliation reports reveal",
+          "Hardware and VMware licensing"
+        ],
+        "constraints": [
+          "Budget ceiling communicated informally: about USD 190k.",
+          "Kickoff on 2026-02-02 and final cutover planned by 2026-10-09 (36 weeks) with a buffer until 2026-10-30, 3 releases about 3 months apart.",
+          "Zero downtime in month-end closing windows: no cutover or deployment in the last 5 and first 3 business days of any month.",
+          "The two client developers are the only source of legacy knowledge and are available about 8 h/week each for workshops and reviews.",
+          "Everything must run in the client's datacenter on VMware; the legacy application and the new services must coexist with no changes to how brokers log in.",
+          "Data stays on premises; production snapshots used for tests must be anonymized.",
+          "Target scale: about 85,000 active policies, 200 concurrent broker users, month-end peak of about 6,000 issuance and endorsement transactions per day.",
+          "Brokers must keep the same screen flow and field order wherever possible, to avoid retraining beyond a short session."
+        ],
+        "proposed_stack": {
+          "backend": "C# on .NET 8: ASP.NET Core Web API, Entity Framework Core, MediatR; YARP as strangler gateway; RabbitMQ with MassTransit for events between old and new.",
+          "frontend": "Angular 17 with NgRx and Angular Material.",
+          "data": "SQL Server stays as the system of record; SQL Server Change Data Capture feeds the synchronization layer.",
+          "legacy": ".NET Framework 4.6 Web Forms, kept running and wrapped by the gateway during the transition.",
+          "quality": "xUnit, Verify (snapshot-based characterization tests), Playwright for UI regression, custom reconciliation tool for parallel runs.",
+          "infra": "Client datacenter (VMware), Docker on Linux and Windows VMs, Azure DevOps pipelines, Octopus Deploy, Seq and Serilog."
+        },
+        "integrations": [
+          "Legacy Web Forms application: reached through the YARP gateway and the shared SQL Server database; the client's developers provide a full code and database backup in week 1.",
+          "SQL Server 2019 database: CDC is enabled by the client's DBA on the 60 agreed tables after the performance impact is measured in the test environment.",
+          "RabbitMQ cluster of 3 nodes on client VMs, provisioned by client IT.",
+          "Azure DevOps and Octopus Deploy: existing client tenant and server, with service accounts created by client IT.",
+          "Existing broker login (Web Forms authentication): the identity bridge reads the legacy session cookie, with no change for end users."
+        ],
+        "assumptions": [
+          "Client IT provisions the 4 VMware environments, RabbitMQ and Octopus within 3 weeks of kickoff.",
+          "A restored production snapshot is available in week 2; anonymization is done by us and approved by the client's Head of IT.",
+          "Business rules are as the legacy code behaves today; when code and documentation differ, the code wins and the difference is recorded in the specification.",
+          "14 screens in scope, with the same fields and flow as today; client feedback within 2 business days and one consolidated round of changes per release.",
+          "Each release has one parallel run of 4 weeks with a daily reconciliation report reviewed by the client's Head of Underwriting.",
+          "3 UAT cycles of 1 week, one per release, with up to 6 broker users each.",
+          "Hypercare is 2 weeks after each cutover; after the last one, support is handled by the client's developers under a separate agreement.",
+          "Release 1 covers issuance, release 2 endorsements and release 3 renewals, each with its gateway routes, Angular screens and synchronization."
+        ],
+        "risks": [
+          {
+            "level": "HIGH",
+            "description": "Undocumented business rules hidden in stored procedures and Web Forms code will be discovered late, adding work to the service ports and characterization suites."
+          },
+          {
+            "level": "HIGH",
+            "description": "Only two people know the legacy system; if either is unavailable or leaves, discovery and parallel-run triage slow down sharply."
+          },
+          {
+            "level": "HIGH",
+            "description": "The synchronization layer may introduce data drift or contention on the legacy database, especially at month-end peaks, and CDC adds load to a database with 600 stored procedures."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Parallel-run discrepancies may be caused by legacy defects that brokers rely on; deciding whether to reproduce or fix them needs client sign-off and can delay a cutover."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "The no-cutover window around month-end leaves limited slots per release; a slipped cutover can push the release by a full month."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Client infrastructure (VMware VMs, RabbitMQ, CDC permissions) may be delivered late, blocking the pipelines and synchronization work."
+          },
+          {
+            "level": "LOW",
+            "description": "Broker resistance to new screens may generate late change requests, despite the same-flow, same-fields rule."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery, reverse engineering and setup",
+            "tasks": [
+              {
+                "name": "Kickoff, scope baseline and release plan for 3 incremental releases",
+                "hours": 16
+              },
+              {
+                "name": "Legacy inventory: 400 tables, 600 stored procedures, dependency map and criticality ranking",
+                "hours": 36
+              },
+              {
+                "name": "Business-rule discovery workshops with the two legacy developers and underwriters (12 sessions of 2 h plus write-up)",
+                "hours": 44
+              },
+              {
+                "name": "Living specification of issuance, endorsement and renewal rules from code and stored procedures",
+                "hours": 32
+              },
+              {
+                "name": "Target architecture and ADRs (strangler boundaries, CDC synchronization, event contracts)",
+                "hours": 24
+              },
+              {
+                "name": "Solution template for .NET 8 services with shared libraries (MediatR, MassTransit and Serilog conventions)",
+                "hours": 18
+              },
+              {
+                "name": "Azure DevOps pipelines: build, test and Docker images for Linux and Windows VMs",
+                "hours": 24
+              },
+              {
+                "name": "Four environments on client VMware (dev, test, staging, production) with Octopus Deploy projects",
+                "hours": 28
+              },
+              {
+                "name": "Seq and Serilog logging with correlation IDs across legacy and new components",
+                "hours": 14
+              }
+            ]
+          },
+          {
+            "name": "Characterization testing",
+            "tasks": [
+              {
+                "name": "Test harness: xUnit and Verify against a restored SQL Server snapshot, repeatable data reset",
+                "hours": 28
+              },
+              {
+                "name": "Production snapshot anonymization scripts (policyholder names, documents, bank data)",
+                "hours": 18
+              },
+              {
+                "name": "Characterization tests for policy issuance (about 120 scenarios, snapshot of stored procedure and page outputs)",
+                "hours": 64
+              },
+              {
+                "name": "Characterization tests for endorsements (about 80 scenarios)",
+                "hours": 44
+              },
+              {
+                "name": "Characterization tests for renewals (about 60 scenarios, including batch renewal)",
+                "hours": 36
+              },
+              {
+                "name": "Golden-master tests for premium and tariff calculation stored procedures",
+                "hours": 36
+              },
+              {
+                "name": "Playwright UI regression suite for the 14 Web Forms screens in scope",
+                "hours": 36
+              },
+              {
+                "name": "Nightly run of the characterization suite in Azure DevOps and flaky test triage",
+                "hours": 14
+              }
+            ]
+          },
+          {
+            "name": "Gateway and synchronization layer",
+            "tasks": [
+              {
+                "name": "YARP gateway: routing per screen and per broker group with feature flags",
+                "hours": 40
+              },
+              {
+                "name": "Identity bridge between legacy session cookie and JWT for new services and Angular",
+                "hours": 28
+              },
+              {
+                "name": "Enable SQL Server CDC on 60 tables and measure impact on legacy performance",
+                "hours": 24
+              },
+              {
+                "name": "CDC reader worker publishing to RabbitMQ with MassTransit and transactional outbox",
+                "hours": 36
+              },
+              {
+                "name": "Legacy-to-new consumers that maintain the new read models",
+                "hours": 32
+              },
+              {
+                "name": "New-to-legacy write-back so untouched Web Forms screens and reports stay correct",
+                "hours": 44
+              },
+              {
+                "name": "Idempotency, ordering, dead-letter handling and replay tooling",
+                "hours": 24
+              },
+              {
+                "name": "Synchronization lag dashboards and alerts in Seq",
+                "hours": 12
+              }
+            ]
+          },
+          {
+            "name": "Backend services (.NET 8)",
+            "tasks": [
+              {
+                "name": "Policy domain model and EF Core mappings over the existing schema",
+                "hours": 36
+              },
+              {
+                "name": "Policy issuance service: commands, queries and validation with MediatR",
+                "hours": 52
+              },
+              {
+                "name": "Premium and tariff engine ported from stored procedures to C#",
+                "hours": 56
+              },
+              {
+                "name": "Policy certificate PDF generation with parity to the legacy document",
+                "hours": 20
+              },
+              {
+                "name": "Endorsements service (inclusion, exclusion, cancellation)",
+                "hours": 56
+              },
+              {
+                "name": "Renewals service with batch renewal job and broker notifications",
+                "hours": 48
+              },
+              {
+                "name": "Authorization and role parity with the legacy permission tables",
+                "hours": 20
+              },
+              {
+                "name": "Audit trail and domain events published through MassTransit",
+                "hours": 20
+              },
+              {
+                "name": "OpenAPI contracts and API versioning",
+                "hours": 12
+              },
+              {
+                "name": "Performance tuning against month-end closing volumes",
+                "hours": 24
+              }
+            ]
+          },
+          {
+            "name": "Frontend (Angular 17)",
+            "tasks": [
+              {
+                "name": "Angular 17 workspace, NgRx store, Angular Material theme and shared component library",
+                "hours": 26
+              },
+              {
+                "name": "Application shell and navigation coexisting with Web Forms (shared header, deep links)",
+                "hours": 28
+              },
+              {
+                "name": "Policy search and list screens (2 screens)",
+                "hours": 24
+              },
+              {
+                "name": "Policy issuance wizard (5 screens)",
+                "hours": 48
+              },
+              {
+                "name": "Endorsement screens (3 screens)",
+                "hours": 32
+              },
+              {
+                "name": "Renewal worklist and batch renewal screens (3 screens)",
+                "hours": 30
+              },
+              {
+                "name": "Policy detail screen with coverage, premium and history",
+                "hours": 22
+              },
+              {
+                "name": "Screen parity review sessions with brokers (14 screens)",
+                "hours": 20
+              },
+              {
+                "name": "Frontend unit and component tests",
+                "hours": 24
+              }
+            ]
+          },
+          {
+            "name": "Quality assurance and parallel run",
+            "tasks": [
+              {
+                "name": "Reconciliation tool: design and data model",
+                "hours": 24
+              },
+              {
+                "name": "Reconciliation tool: comparison engine for policies, premiums and ledger entries",
+                "hours": 48
+              },
+              {
+                "name": "Reconciliation reports and tolerance rules for daily review",
+                "hours": 20
+              },
+              {
+                "name": "Parallel run and discrepancy triage, release 1 (4 weeks)",
+                "hours": 32
+              },
+              {
+                "name": "Parallel run and discrepancy triage, release 2 (4 weeks)",
+                "hours": 32
+              },
+              {
+                "name": "Parallel run and discrepancy triage, release 3 (4 weeks)",
+                "hours": 32
+              },
+              {
+                "name": "Integration tests with Testcontainers on SQL Server and RabbitMQ",
+                "hours": 32
+              },
+              {
+                "name": "Contract tests between gateway, new services and legacy",
+                "hours": 16
+              },
+              {
+                "name": "Month-end volume load tests with a custom harness",
+                "hours": 24
+              },
+              {
+                "name": "Security review: authorization parity, OWASP checks and dependency scan",
+                "hours": 20
+              },
+              {
+                "name": "UAT support, 3 cycles of 1 week (one per release)",
+                "hours": 30
+              }
+            ]
+          },
+          {
+            "name": "Cutover, deployment and handover",
+            "tasks": [
+              {
+                "name": "Cutover runbooks and rollback plans for the 3 releases, scheduled outside month-end windows",
+                "hours": 28
+              },
+              {
+                "name": "Release 1 cutover and 2 weeks of hypercare",
+                "hours": 30
+              },
+              {
+                "name": "Release 2 cutover and 2 weeks of hypercare",
+                "hours": 30
+              },
+              {
+                "name": "Release 3 cutover and 2 weeks of hypercare",
+                "hours": 30
+              },
+              {
+                "name": "Retire migrated Web Forms pages and obsolete stored procedures",
+                "hours": 20
+              },
+              {
+                "name": "Documentation: architecture, synchronization operations runbook, rule specification",
+                "hours": 24
+              },
+              {
+                "name": "Pairing and knowledge transfer with the 2 client developers",
+                "hours": 36
+              },
+              {
+                "name": "Broker training: 6 sessions and quick reference guides",
+                "hours": 14
+              }
+            ]
+          },
+          {
+            "name": "Project management",
+            "tasks": [
+              {
+                "name": "Project management, weekly status and steering committee (about 8%)",
+                "hours": 110
+              },
+              {
+                "name": "Release calendar and change-window coordination with month-end closing",
+                "hours": 40
+              },
+              {
+                "name": "Stakeholder and risk management with the two key legacy developers",
+                "hours": 36
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (17%, driven by undocumented business rules, CDC synchronization and key-person availability)",
+                "hours": 350
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Tech Lead / senior .NET engineer (also delivery manager)",
+            "count": 1,
+            "part_time": false
+          },
+          {
+            "role": ".NET engineer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "Angular developer",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "QA automation engineer",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 30,
+          "max_weeks": 36
+        }
+      }
+    },
+    {
+      "meeting_summary": {
+        "meeting": {
+          "title": "Discovery call — Marketing website with CMS for Clínica Sonríe",
+          "date": "2026-05-12",
+          "duration_minutes": 45,
+          "attendees": {
+            "client": [
+              "Clinic Director",
+              "Front Desk Manager",
+              "Marketing Coordinator (external designer, part-time)"
+            ],
+            "us": [
+              "Account Manager",
+              "Lead Developer"
+            ]
+          }
+        },
+        "context_and_problem": "Clínica Sonríe is a dental clinic with 3 locations and about 25 employees. Its current website is an outdated WordPress site with 14 pages, not mobile friendly, with a Lighthouse performance score of about 35 on mobile. The front desk cannot edit content without calling the previous agency, appointment requests arrive by phone (about 60 calls per week, many outside opening hours), and plugin updates have been neglected for two years. The site generates few organic visits and the clinic wants a fast, easy-to-edit site that captures appointment requests.",
+        "goal": "Launch a new marketing site of 7 pages in Spanish and English that the front desk can edit without developers, and that captures appointment requests online. Success criteria stated by the client: mobile Lighthouse performance above 90, at least 30 online appointment requests per month within 3 months of launch, no loss of organic traffic after the migration, and content changes published by the front desk in under 10 minutes.",
+        "in_scope": [
+          "7 pages: home, treatments, team, locations, prices, blog (list and post) and contact, implemented from the Figma design provided by the client's designer.",
+          "Spanish and English versions of every page, with language switcher and hreflang tags.",
+          "Storyblok CMS with 3 content types (Page, Blog post, Location), reusable blocks and the visual editor; publishing triggers one rebuild on Netlify.",
+          "Appointment request form: name, phone, email, preferred location and treatment, preferred time slot and message. Each submission sends an email to the front desk through Resend and appends a row to a Google Sheet.",
+          "One Google Maps embed per location (3 locations).",
+          "SEO basics: meta tags, Open Graph, XML sitemap, LocalBusiness structured data and 301 redirects from the old WordPress URLs.",
+          "Plausible Analytics and Cookiebot cookie consent.",
+          "Image optimization (responsive AVIF and WebP) and a Lighthouse CI performance budget.",
+          "Entry of the existing content in both languages into Storyblok, using text supplied by the client.",
+          "Deployment on Netlify with preview deploys per pull request, DNS cutover and one 90-minute training session for the front desk."
+        ],
+        "out_of_scope": [
+          "Online booking with real-time calendar availability or patient accounts.",
+          "Content writing and translation: the client supplies final Spanish and English text and photos.",
+          "Visual design and Figma work (provided by the client's designer).",
+          "Online payments, patient portal or integration with the clinic management software.",
+          "Paid advertising, Google Business Profile management and ongoing SEO work.",
+          "Support and maintenance after the 2-week warranty period."
+        ],
+        "constraints": [
+          "Budget ceiling communicated informally: about USD 6k.",
+          "Kickoff on 2026-06-01 and go-live by 2026-06-26, ahead of the clinic's summer promotion campaign.",
+          "Client availability: the Front Desk Manager reviews content within 2 business days; the designer is available 8 hours per week.",
+          "Privacy: cookie consent is required before any analytics or third-party scripts load; patient health data is not collected in the form.",
+          "Performance target: mobile Lighthouse performance above 90 on all 7 pages.",
+          "Editors are non-technical: publishing a change must take no more than 3 clicks in Storyblok and appear on the site within 3 minutes."
+        ],
+        "proposed_stack": {
+          "site": "Astro 4 (static output with a few islands), TypeScript, Tailwind CSS, astro-i18next for Spanish and English, astro-seo and the sitemap integration.",
+          "cms": "Storyblok (visual editor, 3 content types, one webhook rebuild).",
+          "forms_and_integrations": "Netlify Forms with a serverless function that writes to Google Sheets and sends email through Resend; Google Maps embeds.",
+          "analytics_and_privacy": "Plausible Analytics, Cookiebot for consent.",
+          "delivery": "Netlify (preview deploys per pull request), GitHub, Lighthouse CI."
+        },
+        "integrations": [
+          "Storyblok: the client creates the account and invites us as admin; we configure the space and the webhook.",
+          "Netlify: we own the site and deploy pipeline; the client provides DNS access for the cutover.",
+          "Google Sheets: the client shares a sheet with a service account that we provide.",
+          "Resend: we create the account with the clinic's domain; the client adds the SPF and DKIM DNS records.",
+          "Plausible and Cookiebot: accounts created by the client; we install the scripts and configure events.",
+          "Google Maps: standard iframe embeds, no API key required."
+        ],
+        "assumptions": [
+          "The Figma design is complete for all 7 pages in desktop and mobile before kickoff and is not changed after week 1, except for one consolidated round of minor adjustments.",
+          "The client provides final Spanish and English text and photos by the end of week 2; the content is entered by us, about 7 pages and 12 blog posts at most.",
+          "Spanish is the default language; English pages mirror the Spanish structure.",
+          "The site has about 14 old URLs; the redirect map is built from a crawl of the current site and each old URL maps to one new URL.",
+          "One round of client review per demo, with feedback within 2 business days, and one UAT cycle of 3 days run by the Front Desk Manager.",
+          "Staff access: 3 Storyblok editor accounts, covered by the client's Storyblok plan.",
+          "Support after launch is limited to a 2-week warranty for defects; anything else is handled under a separate agreement."
+        ],
+        "risks": [
+          {
+            "level": "MEDIUM",
+            "description": "Client content and photos arrive late, which blocks content entry and the final QA before the 2026-06-26 go-live."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Design changes after week 1 force rework of already built templates and blocks."
+          },
+          {
+            "level": "MEDIUM",
+            "description": "Missing redirects or changed URLs could cause a drop in organic traffic after the cutover."
+          },
+          {
+            "level": "LOW",
+            "description": "DNS records for Resend (SPF and DKIM) and the cutover depend on the client's domain provider and can delay email delivery tests."
+          },
+          {
+            "level": "LOW",
+            "description": "Cookiebot may reduce the measured traffic in Plausible and affects how the success metrics are read."
+          },
+          {
+            "level": "LOW",
+            "description": "The front desk may need more than one training session to feel comfortable with the Storyblok visual editor."
+          }
+        ]
+      },
+      "estimation": {
+        "phases": [
+          {
+            "name": "Discovery and setup",
+            "tasks": [
+              {
+                "name": "Kickoff, Figma review and content inventory of the 7 pages and old WordPress URLs",
+                "hours": 3
+              },
+              {
+                "name": "Astro 4 project setup with TypeScript, Tailwind design tokens from Figma, base layout and GitHub repository",
+                "hours": 6
+              },
+              {
+                "name": "Netlify deployment with preview deploys per pull request and Lighthouse CI budget checks",
+                "hours": 5
+              }
+            ]
+          },
+          {
+            "name": "CMS",
+            "tasks": [
+              {
+                "name": "Storyblok space with 3 content types (Page, Blog post, Location), reusable blocks and visual editor preview",
+                "hours": 8
+              },
+              {
+                "name": "Storyblok content delivery integration in Astro and one Netlify rebuild webhook on publish",
+                "hours": 5
+              }
+            ]
+          },
+          {
+            "name": "Frontend",
+            "tasks": [
+              {
+                "name": "Header, footer, responsive navigation and language switcher components",
+                "hours": 4
+              },
+              {
+                "name": "Home and Treatments pages built from Figma with Storyblok blocks",
+                "hours": 10
+              },
+              {
+                "name": "Team, Locations (3 Google Maps embeds) and Prices pages",
+                "hours": 8
+              },
+              {
+                "name": "Blog list and post templates and Contact page",
+                "hours": 7
+              },
+              {
+                "name": "Spanish and English routing with astro-i18next, translated UI strings and hreflang tags",
+                "hours": 6
+              },
+              {
+                "name": "Image optimization with Astro assets (responsive AVIF/WebP) and Lighthouse performance tuning",
+                "hours": 4
+              }
+            ]
+          },
+          {
+            "name": "Forms, SEO and analytics",
+            "tasks": [
+              {
+                "name": "Appointment request form: Netlify Forms, serverless function writing to Google Sheets and sending email through Resend, validation and honeypot",
+                "hours": 10
+              },
+              {
+                "name": "SEO basics with astro-seo and sitemap integration, plus 301 redirects from old WordPress URLs",
+                "hours": 6
+              },
+              {
+                "name": "Plausible Analytics events and Cookiebot consent banner with script blocking",
+                "hours": 4
+              }
+            ]
+          },
+          {
+            "name": "Content, QA and launch",
+            "tasks": [
+              {
+                "name": "Content entry and translation load in Storyblok for 7 pages in Spanish and English (text supplied by the client)",
+                "hours": 5
+              },
+              {
+                "name": "Cross-browser and device testing, basic accessibility checks and form end-to-end test",
+                "hours": 5
+              },
+              {
+                "name": "DNS cutover, redirect verification and go-live",
+                "hours": 3
+              },
+              {
+                "name": "Handover training for the front desk (one 90-minute session) and short editor guide",
+                "hours": 3
+              }
+            ]
+          },
+          {
+            "name": "Contingency",
+            "tasks": [
+              {
+                "name": "Contingency (about 8%, driven by late Figma changes and client content delivery)",
+                "hours": 8
+              }
+            ]
+          }
+        ],
+        "team": [
+          {
+            "role": "Full-stack developer (Astro, TypeScript)",
+            "count": 1,
+            "part_time": true
+          },
+          {
+            "role": "QA engineer",
+            "count": 1,
+            "part_time": true
+          }
+        ],
+        "duration": {
+          "min_weeks": 3,
+          "max_weeks": 4
+        }
+      }
+    }
+  ]
+}

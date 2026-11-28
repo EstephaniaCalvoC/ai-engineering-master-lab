@@ -1,0 +1,28 @@
+[project]
+name = "estimador-cag"
+version = "0.1.0"
+description = ""
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=2.11.0",
+    "arize-otel>=0.14.1",
+    "fastapi[standard]>=0.165.0",
+    "openai>=3.55.1",
+    "openinference-instrumentation>=0.1.83",
+    "openinference-instrumentation-anthropic>=3.3.9",
+    "openinference-instrumentation-openai>=0.1.77",
+    "pydantic-settings>=2.16.3",
+    "python-dotenv>=1.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.6",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+markers = [
+    "integration: calls a real LLM API and costs money; skipped unless --run-integration is passed",
+]

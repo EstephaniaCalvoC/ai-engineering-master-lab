@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./**/.env)",
+      "Read(./**/.env.integration)",
+      "Edit(./.env)",
+      "Edit(./**/.env)",
+      "Edit(./**/.env.integration)",
+      "Write(./.env)",
+      "Write(./**/.env)",
+      "Write(./**/.env.integration)",
+      "Bash(cat .env)",
+      "Bash(head .env)",
+      "Bash(tail .env)",
+      "Bash(less .env)",
+      "Bash(more .env)",
+      "Bash(grep * .env)",
+      "Bash(source .env)",
+      "Bash(. .env)",
+      "Bash(cat *.env.integration)",
+      "Bash(head *.env.integration)",
+      "Bash(tail *.env.integration)",
+      "Bash(less *.env.integration)",
+      "Bash(more *.env.integration)",
+      "Bash(grep * *.env.integration)",
+      "Bash(source *.env.integration)",
+      "Bash(. *.env.integration)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Edit|Write|NotebookEdit|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_secrets.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
