@@ -84,7 +84,7 @@ Do this **before** fetching LIDR's solution (step 4), so the reference doesn't s
 **Contents.** The rubric JSON has `schema_version` (1), `session`, `created_at` (`YYYY-MM-DD HH:MM`), `exercise_path` and `items`. Each item has:
 
 - **`id`:** `R01`, `R02`… in the order the exercise presents them.
-- **`kind`:** `checklist` for items that are checked; `optional` for optional features; `deferred` for everything deferred to the live session. Deferred items are marked in the exercise by a note such as "Nota sobre la sesión en vivo" or "los implementaremos juntos durante la sesión en vivo" (the exercise may be in Spanish, so match these markers in any language), or by equivalent wording. Optional and deferred items are listed and never penalized, and they have `type` and `validation` set to `null`.
+- **`kind`:** `checklist` for items that are checked; `optional` for optional features; `deferred` for everything deferred to the live session. Deferred items are marked in the exercise by a note such as "Note about the live session" or "we will implement ... together during the live session" (match these markers by meaning, since an exercise may be in another language), or by equivalent wording. Optional and deferred items are listed and never penalized, and they have `type` and `validation` set to `null`.
 - **`item`:** what to check, in English.
 - **`type`** (checklist only): one of `Mandatory requirement`, `Functionality`, `Security`, `Architecture and design`.
 - **`criteria`:** what the exercise must have, and how to tell.
