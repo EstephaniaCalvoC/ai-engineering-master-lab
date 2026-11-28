@@ -1,36 +1,36 @@
-<!-- Write the whole report in Spanish. Fill in the placeholders and remove these comments. -->
-# Sesión XX — Informe de brechas con la sesión en vivo
+<!-- Write the whole report in English. Fill in the placeholders and remove these comments. -->
+# Session XX — Gaps report against the live session
 
-- **Tu trabajo:** `session_XX` @ `<sha>`
-- **Sesión en vivo de LIDR:** `<ref>` @ `<sha>`
-- **Cambios de la sesión en vivo tomados de:** `<rango>` (indica si la separación entre trabajo previo y sesión en vivo es una inferencia)
-- **Fecha:** AAAA-MM-DD
+- **Your work:** `session_XX` @ `<sha>`
+- **LIDR live session:** `<ref>` @ `<sha>`
+- **Live-session changes taken from:** `<range>` (say whether the split between prior work and the live session is an inference)
+- **Date:** YYYY-MM-DD
 
-## Resumen
+## Summary
 <!-- What the live session was about, and where you stand. -->
 
-| ID | Brecha | Categoría | Prioridad | Tu estado (falta / parcial) |
-|----|--------|-----------|-----------|-----------------------------|
+| ID | Gap | Category | Priority | Your status (missing / partial) |
+|----|-----|----------|----------|---------------------------------|
 
-## Lo que ya tienes
+## What you already have
 - 
 
-## Funcionalidades nuevas y patrones de arquitectura
-### G1 — <título>
-- **Prioridad:** Bloqueante | Recomendada | Opcional
-- **Archivos de LIDR:**
-- **Tus archivos afectados:**
-- **Qué se hizo en la sesión en vivo:**
-- **Por qué importa en producción:**
-- **Cambios necesarios para igualarlo:**
+## New features and architecture patterns
+### G1 — <title>
+- **Priority:** Blocker | Recommended | Optional
+- **LIDR files:**
+- **Your affected files:**
+- **What the live session did:**
+- **Why it matters in production:**
+- **Changes needed to match it:**
 
-## Diferencias de implementación y calidad del código
+## Implementation differences and code quality
 
-## Brechas conceptuales antes de la próxima sesión
-- **Concepto:** por qué lo necesitas, y una pregunta para comprobar que lo entiendes.
+## Conceptual gaps before the next session
+- **Concept:** why you need it, and a question to check that you understand it.
 
-## Orden de trabajo sugerido
+## Suggested order of work
 1. 
 
-## No comparado
+## Not compared
 <!-- What was skimmed or skipped, and why. -->

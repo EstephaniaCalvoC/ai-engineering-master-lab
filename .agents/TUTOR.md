@@ -1,70 +1,69 @@
-# Guía del tutor 🧑‍🏫
+# Tutor guide 🧑‍🏫
 
-Cómo funcionan las skills del lab y cómo adaptarlas. Para instalar el lab y configurar tu agente, vuelve al [README](../README.md).
+How the lab's skills work and how to adapt them. To install the lab and set up your agent, go back to the [README](../README.md).
 
-## Índice 🗺
+## Index 🗺
 
-- 🔍 [`review-exercise`: antes de la sesión](#review-exercise-tu-tutor-antes-de-la-sesión-)
-- 🧩 [`live-gaps`: después de la sesión](#live-gaps-tu-tutor-después-de-la-sesión-)
-- ✨ [La rama `refine/session_XX`](#qué-es-la-rama-refinesession_xx-)
-- 📚 [Sobre la referencia de LIDR](#sobre-la-referencia-de-lidr-)
-- 🔧 [Hazlo tuyo](#hazlo-tuyo-)
+- 🔍 [`review-exercise`: before the session](#review-exercise-your-tutor-before-the-session-)
+- 🧩 [`live-gaps`: after the session](#live-gaps-your-tutor-after-the-session-)
+- ✨ [The `refine/session_XX` branch](#what-is-the-refinesession_xx-branch-)
+- 📚 [About the LIDR reference](#about-the-lidr-reference-)
+- 🔧 [Make it yours](#make-it-yours-)
 
-## `review-exercise`: tu tutor antes de la sesión 🔍
+## `review-exercise`: your tutor before the session 🔍
 
-- 📋 **Necesita:** una rama `session_XX` y el enunciado en `sXX_exercise.txt`, en la raíz del repo. Si falta la rama, te explica cómo crearla y se detiene. Si falta el enunciado, te pide que lo pegues, crea el archivo en tu rama de sesión y te pregunta si quieres hacer commit.
-- ⚙️ **Qué hace:** crea una rúbrica a partir del ejercicio y revisa con ella tu código commiteado. Compara con el ejercicio resuelto de LIDR los requisitos obligatorios y la arquitectura y diseño; la seguridad y la funcionalidad no se comparan.
-- 📄 **Qué genera:** `reports/session_XX_review.md`, con el veredicto, lo que hiciste bien, todos los hallazgos (críticos, importantes y deseables) en detalle, preguntas para reflexionar, la rúbrica, los tests y el contexto de la revisión.
-- 🗺️ **Cómo leer el informe:** empieza con un índice, el veredicto y los hallazgos ordenados por prioridad. Al final, «Evaluación detallada» explica cada emoji de estado y muestra la tabla de la rúbrica y los tests.
-- 🏗️ **Qué se valora:** el diseño, la arquitectura, los prompts y que uses bien el stack tecnológico. Usar un modelo, proveedor o librería distinto al del enunciado no resta si cumple la misma función. Usarlo mal sí se señala. El agente crea primero una rúbrica a partir del enunciado (`reports/sXX_rubric_*.json`) y la reutiliza mientras el enunciado no cambie, para que dos revisiones del mismo ejercicio se comparen bien.
-- 🔑 **Posibles claves:** si el escaneo encuentra algo que podría ser una clave y no se puede confirmar ni descartar, es un hallazgo importante, no crítico. Aparece también como nota en el contexto de la revisión, para que revises la línea. Un archivo de secretos commiteado sigue siendo crítico.
-- 🧪 **Tests:** si tu proyecto está bien estructurado y documenta cómo ejecutar sus tests, un subagente los ejecuta sobre una copia temporal del código commiteado, sin tu `.env` ni tus claves y sin tests de integración de pago. Puede instalar las dependencias que declares (usa la red). Es código que se ejecuta en tu máquina: la copia no es un sandbox. Si partiste de código de LIDR, o los tests requieren algo más (Docker, servicios externos…), te pregunta antes. Si un test falla, lo informa con su error, sin reintentarlo ni investigar la causa: si quieres profundizar, pídeselo. Si tu agente no admite subagentes, te da los comandos.
-- 🔍 **Puntos sin verificar:** si ni un test ni el código permiten comprobar un punto, el agente crea `reports/sXX_questions.md` y te hace una pregunta de sí o no sobre cada uno. Con «Sí» queda cumplido y con «No», no cumplido. En el informe aparece como «Confirmado por el estudiante», y un «Sí» puede llevar al veredicto «¡Lo hiciste genial!», con una nota que lo indica. Si no lo sabes, responde «no sé»: sigue como «no verificado» y el informe incluye una nota para que lo aclares. Tu respuesta no cambia lo que ya demuestran un test que falla o un defecto en el código.
-- 🤝 **Juego limpio:** las funcionalidades reservadas para la clase en vivo no te restan. Los puntos que requieren la aplicación en ejecución no se adivinan: se te preguntan o quedan como «no verificados».
+- 📋 **Needs:** a `session_XX` branch and the exercise prompt in `sXX_exercise.txt`, in the repo root. If the branch is missing, it explains how to create it and stops. If the prompt is missing, it asks you to paste it, creates the file on your session branch, and asks whether you want to commit it.
+- ⚙️ **What it does:** creates a rubric from the exercise and reviews your committed code against it. It compares the mandatory requirements and the architecture and design with LIDR's solved exercise; security and functionality are not compared.
+- 📄 **What it generates:** `reports/session_XX_review.md`, with the verdict, what you did well, all findings (critical, important and nice to have) in detail, questions to reflect on, the rubric, the tests and the review context.
+- 🗺️ **How to read the report:** start with the index, the verdict and the findings sorted by priority. At the end, "Detailed evaluation" explains each status emoji and shows the rubric table and the tests.
+- 🏗️ **What it values:** design, architecture, prompts and good use of the stack. Using a model, provider or library different from the one in the exercise is not penalized if it fills the same role. Using it badly is flagged. The agent first creates a rubric from the exercise (`reports/sXX_rubric_*.json`) and reuses it while the exercise doesn't change, so two reviews of the same exercise are comparable.
+- 🔑 **Possible keys:** if the scan finds something that could be a key and it can't be confirmed or ruled out, it's an important finding, not a critical one. It also appears as a note in the review context, so you can check the line. A committed secrets file is still critical.
+- 🧪 **Tests:** if your project is well structured and documents how to run its tests, a subagent runs them on a temporary copy of the committed code, without your `.env` or your keys and without paid integration tests. It may install the dependencies you declare (it uses the network). This is code that runs on your machine: the copy is not a sandbox. If you started from LIDR's code, or the tests need something more (Docker, external services…), it asks you first. If a test fails, it reports the failure with its error, without retrying it or investigating the cause: if you want to go deeper, ask for it. If your agent can't start subagents, it gives you the commands instead.
+- 🔍 **Unverified points:** if neither a test nor the code can check a point, the agent creates `reports/sXX_questions.md` and asks you a yes/no question about each one. "Yes" completes the item and "No" marks it as not met. The report shows it as "Confirmed by the student", and a "Yes" can lead to the verdict "Great job!", with a note saying so. If you don't know, answer "don't know": the item stays unverified and the report includes a note asking you to clarify it. Your answer never changes what a failing test or a defect in the code already shows.
+- 🤝 **Fair play:** features reserved for the live class don't count against you. Points that need the running app are not guessed: they are asked about or left as unverified.
 
-## `live-gaps`: tu tutor después de la sesión 🧩
+## `live-gaps`: your tutor after the session 🧩
 
-- 📋 **Necesita:** una rama `session_XX`, una vez hecha la clase en vivo. El archivo del ejercicio es opcional, pero ayuda a saber qué se pedía antes de la clase.
-- ⚙️ **Qué hace:** compara tu código con la rama de la sesión en vivo de LIDR.
-- 📄 **Qué genera:** `reports/session_XX_gaps_report.md`, que relaciona cada brecha con los archivos afectados, por qué importa y cómo cerrarla. Opcionalmente, cambios de código en `refine/session_XX`.
+- 📋 **Needs:** a `session_XX` branch, once the live class has happened. The exercise file is optional, but it helps to know what was asked before the class.
+- ⚙️ **What it does:** compares your code with the LIDR live-session branch for that session.
+- 📄 **What it generates:** `reports/session_XX_gaps_report.md`, which links each gap to the affected files, why it matters and how to close it. Optionally, code changes on `refine/session_XX`.
 
-La revisión, el informe de brechas y la conversación con el tutor son **en español**. Git ignora los informes, así que se quedan en tu máquina y siguen ahí al cambiar de rama. Para versionar alguno en Git: `git add -f reports/<archivo>.md`.
+The review, the gaps report and the conversation with the tutor are all in **English**. Git ignores the reports, so they stay on your machine and remain there when you switch branches. To version one in Git: `git add -f reports/<file>.md`.
 
-### ¿Qué es la rama `refine/session_XX`? ✨
+### What is the `refine/session_XX` branch? ✨
 
-Es una rama opcional para **mejorar tu ejercicio con lo aprendido en la clase en vivo**, sin tocar lo que entregaste. `session_XX` queda como registro de lo que hiciste por tu cuenta; `refine/session_XX` es ese mismo trabajo más las correcciones de las brechas.
+It's an optional branch to **improve your exercise with what you learned in the live class**, without touching what you submitted. `session_XX` stays as a record of what you did on your own; `refine/session_XX` is that same work plus the gap fixes.
 
-- ⏰ **Cuándo se crea:** solo si dices que sí después de leer el informe de brechas. Pedir las correcciones en tu primera petición de `/live-gaps` no cuenta: el agente vuelve a preguntar y espera tu respuesta.
-- 📍 **De dónde parte:** del commit de tu rama de sesión que se comparó. No puede haber cambios pendientes; si los hay, el agente te pide que hagas commit o stash primero.
-- 📦 **Qué contiene:** solo las brechas que elijas (todas, o IDs concretos como `G1` y `G3`), adaptadas a tu estructura, tus nombres y tu proveedor de modelos. No copia el proyecto de LIDR encima del tuyo.
-- ♻️ **Si ya existe:** el agente te pregunta si quieres continuar en ella o usar otro nombre, como `refine/session_XX_2`. Nunca la resetea ni la borra.
-- 🏁 **Al terminar:** el agente muestra qué cambió y qué omitió o no pudo verificar, y pregunta antes de hacer commit. No hace push ni merge. Te quedas en la rama refine.
+- ⏰ **When it's created:** only if you say yes after reading the gaps report. Asking for fixes in your first `/live-gaps` request doesn't count: the agent asks again and waits for your answer.
+- 📍 **Where it starts:** from the commit of your session branch that was compared. There must be no pending changes; if there are, the agent asks you to commit or stash first.
+- 📦 **What it contains:** only the gaps you choose (all of them, or specific IDs such as `G1` and `G3`), adapted to your structure, your names and your model provider. It does not copy LIDR's project over yours.
+- ♻️ **If it already exists:** the agent asks whether to continue on it or use another name, such as `refine/session_XX_2`. It never resets or deletes it.
+- 🏁 **When it finishes:** the agent shows what changed and what it skipped or couldn't verify, and asks before committing. It doesn't push or merge. You stay on the refine branch.
 
-Para compararla con tu entrega, después del commit: `git diff session_XX refine/session_XX`. Tu siguiente sesión puede [partir de esta rama](../README.md#2-crea-la-rama-de-la-sesión-).
+To compare it with your submission, after committing: `git diff session_XX refine/session_XX`. Your next session can [start from this branch](../README.md#2-create-the-session-branch-).
 
-## Sobre la referencia de LIDR 📚
+## About the LIDR reference 📚
 
-Las skills guardan una copia aparte y de solo lectura del [repo de LIDR](https://github.com/LIDR-academy-temp/ai-engineering) en `.lab-cache/`. No añade ningún remoto, rama ni commit a tu repo, y puedes borrarla cuando quieras.
+The skills keep a separate, read-only copy of the [LIDR repo](https://github.com/LIDR-academy-temp/ai-engineering) in `.lab-cache/`. It doesn't add any remote, branch or commit to your repo, and you can delete it whenever you want.
 
 > [!NOTE]
-> Tu agente envía el código que lee a su proveedor de modelos. No metas secretos ni datos privados de clientes en tu proyecto.
+> Your agent sends the code it reads to its model provider. Don't put secrets or private client data in your project.
 
-## Hazlo tuyo 🔧
+## Make it yours 🔧
 
-- 🌍 **Cambia el idioma.** El programa es para hispanohablantes, así que todo viene en español. Si lo prefieres en otro idioma, en tu copia cambia la regla **Language** de [AGENTS.md](../AGENTS.md) y de los dos `SKILL.md`, traduce la plantilla de la carpeta `assets/` de `live-gaps`, los textos de los informes de `review-exercise` (en `scripts/review_tool.py`), los README y esta guía. En el `SKILL.md` de `review-exercise` cambia también los nombres de las prioridades y los veredictos, y en el de `live-gaps` los de las categorías y prioridades.
-- 🎛️ **Ajusta el tutor.** Edita la personalidad, la exigencia o las prioridades en los archivos `SKILL.md`, o el formato de los informes: en `live-gaps`, en su carpeta `assets/`; en `review-exercise`, en `scripts/review_tool.py`.
-- ➕ **Añade una skill.** Crea `.agents/skills/<nombre>/SKILL.md`:
+- 🎛️ **Tune the tutor.** Edit the personality, strictness or priorities in the `SKILL.md` files, or the report format: in `live-gaps`, in its `assets/` folder; in `review-exercise`, in `scripts/review_tool.py`.
+- ➕ **Add a skill.** Create `.agents/skills/<name>/SKILL.md`:
 
   ```markdown
   ---
   name: quiz
-  description: Pregúntame sobre los conceptos de una sesión. Úsala cuando el estudiante pida un quiz o quiera poner a prueba lo que entendió.
+  description: Quiz me on the concepts of a session. Use when the student asks for a quiz or wants to test what they understood.
   ---
 
-  Lee sXX_exercise.txt y haz 5 preguntas, una por una...
+  Read sXX_exercise.txt and ask me 5 questions, one at a time...
   ```
 
-  El nombre de la carpeta debe coincidir con `name`, que solo admite minúsculas, números y guiones (sin guiones bajos). Los agentes usan `description` para decidir cuándo usar la skill. No reutilices el nombre de un comando integrado. Para Claude Code, añade el enlace: `ln -s ../../.agents/skills/quiz .claude/skills/quiz`. Después, inclúyela en `AGENTS.md`.
+  The folder name must match `name`, which only allows lowercase letters, numbers and hyphens (no underscores). Agents use `description` to decide when to use the skill. Don't reuse the name of a built-in command. For Claude Code, add the link: `ln -s ../../.agents/skills/quiz .claude/skills/quiz`. Then list it in `AGENTS.md`.
 
-- 💡 **Ideas:** un tutor `python-expert` para estudiantes que vienen de otros lenguajes de programación, quizzes de conceptos, diagramas de arquitectura, preparación de entrevistas, críticas de prompts, «explícame este diff».
-- 🤗 **Compártelo.** Abre un PR o publica tu fork para tus compañeros. Comparte las *skills*, no tus soluciones ni tus informes.
+- 💡 **Ideas:** a `python-expert` tutor for students coming from other programming languages, concept quizzes, architecture diagrams, interview preparation, prompt critiques, "explain this diff".
+- 🤗 **Share it.** Open a PR or publish your fork for your classmates. Share the *skills*, not your solutions or your reports.

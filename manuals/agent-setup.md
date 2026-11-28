@@ -1,68 +1,68 @@
-# Configuración según tu agente 🤖
+# Agent-specific setup 🤖
 
-[← Volver al README](../README.md)
+[← Back to the README](../README.md)
 
-La única fuente de verdad es [AGENTS.md](../AGENTS.md) junto con [.agents/skills/](../.agents/skills/). Basado en la documentación de cada herramienta a noviembre de 2026. La configuración de cada agente es local: Git ignora `.claude/`, `.codex/`, `.cursor/` y `.gemini/` en la raíz. Créala una vez en cada clon. Estas herramientas cambian rápido y no hemos probado las skills en todas, así que los PR con correcciones son bienvenidos.
+The single source of truth is [AGENTS.md](../AGENTS.md) together with [.agents/skills/](../.agents/skills/). Based on each tool's documentation as of November 2026. Configuration is local to each agent: Git ignores `.claude/`, `.codex/`, `.cursor/` and `.gemini/` at the root. Create it once per clone. These tools change quickly and we haven't tested the skills in all of them, so PRs with corrections are welcome.
 
-La tabla muestra lo necesario para usar las skills. Además, te recomendamos [añadir el hook de `.env`](#hook-de-protección-de-env-) en cualquier agente que lo admita.
+The table shows what's needed to use the skills. We also recommend [adding the `.env` hook](#env-protection-hook-) in any agent that supports it.
 
-| Agente | Configuración para las skills | Cómo ejecutar la skill |
+| Agent | Configuration for the skills | How to run the skill |
 |---|---|---|
-| Claude Code | [Enlaces a las skills](#claude-code-) | `/review-exercise session_02`, `/live-gaps session_02`, o pídelo con tus palabras |
-| Cursor | Ninguna | Escribe `/` y elige la skill, o pídelo con tus palabras |
-| Codex CLI | Ninguna | `$review-exercise session_02`, `$live-gaps session_02`, o `/skills` |
-| GitHub Copilot (VS Code) | Ninguna | Menú `/` en el chat, o pídelo con tus palabras |
-| Antigravity | Ninguna | `/review-exercise session_02`, `/live-gaps session_02`, o pídelo con tus palabras |
-| Gemini CLI | [Contexto](#gemini-cli--antigravity-) | Pídelo con tus palabras; `/skills list` para comprobarlo |
-| Windsurf / Devin Desktop | Ninguna | Pídelo con tus palabras |
+| Claude Code | [Links to the skills](#claude-code-) | `/review-exercise session_02`, `/live-gaps session_02`, or ask in your own words |
+| Cursor | None | Type `/` and pick the skill, or ask in your own words |
+| Codex CLI | None | `$review-exercise session_02`, `$live-gaps session_02`, or `/skills` |
+| GitHub Copilot (VS Code) | None | `/` menu in the chat, or ask in your own words |
+| Antigravity | None | `/review-exercise session_02`, `/live-gaps session_02`, or ask in your own words |
+| Gemini CLI | [Context](#gemini-cli--antigravity-) | Ask in your own words; `/skills list` to check |
+| Windsurf / Devin Desktop | None | Ask in your own words |
 
-## Hook de protección de `.env` 🔐
+## `.env` protection hook 🔐
 
-Recomendado. Impide que tu agente abra o toque `.env`, `.env.local`, `prod.env`, `.envrc` y similares. Las plantillas `.env.example` y `.env.examples` están permitidas. Necesita Bash y **uv** (ejecuta Python 3.11 y lo descarga si no lo tienes).
+Recommended. It stops your agent from opening or touching `.env`, `.env.local`, `prod.env`, `.envrc` and similar files. The templates `.env.example` and `.env.examples` are allowed. It needs Bash and **uv** (it runs Python 3.11 and downloads it if you don't have it).
 
-Se añade en este orden:
+Add it in this order:
 
-1. **Usa los scripts** de `.agents/hooks/`, que vienen en el repo. Hazlo antes del paso 2: si la configuración apunta a un script que no existe, o falta uv, el hook bloquea las llamadas a herramientas.
-2. **Conéctalo con tu agente** usando la configuración de su sección.
-3. **Pruébalo:** crea un `.env` con un valor **falso** y pídele al agente que lo lea. Debería bloquearlo. Sin agente, desde la raíz del repo, `echo '{"tool_input":{"command":"cat .env"}}' | bash .agents/hooks/block-env.sh claude; echo $?` debe imprimir `2`.
+1. **Use the scripts** in `.agents/hooks/`, which come with the repo. Do this before step 2: if the configuration points to a script that doesn't exist, or uv is missing, the hook blocks tool calls.
+2. **Connect it to your agent** using the configuration in its section.
+3. **Test it:** create a `.env` with a **fake** value and ask the agent to read it. It should be blocked. Without an agent, from the repo root, `echo '{"tool_input":{"command":"cat .env"}}' | bash .agents/hooks/block-env.sh claude; echo $?` should print `2`.
 
-Los scripts de `.agents/hooks/` están en el repo, así que siguen ahí al cambiar de rama. Git ignora `.agents/hooks.json` y la configuración de tu agente, que son locales.
+The scripts in `.agents/hooks/` are in the repo, so they stay there when you switch branches. Git ignores `.agents/hooks.json` and your agent's configuration, which are local.
 
-Cada agente necesita un archivo de configuración que llame a los scripts. Crea solo el de tu agente:
+Each agent needs a configuration file that calls the scripts. Create only the one for your agent:
 
-| Archivo | Lo lee | Qué contiene |
+| File | Read by | What it contains |
 |---|---|---|
-| `.agents/hooks/block-env.sh` y `block_env.py` | Todos, a través de su configuración | La lógica del bloqueo. Necesitan uv |
-| `.claude/settings.json` | Claude Code (Copilot y Devin también lo leen) | El hook y las reglas `deny` de lectura para los nombres habituales de `.env` |
-| `.cursor/hooks.json` | Cursor | El hook en `preToolUse`, `beforeReadFile` y `beforeShellExecution` |
-| `.codex/hooks.json` | Codex CLI | El hook. Hay que marcar el proyecto como de confianza y aprobarlo con `/hooks` |
-| `.gemini/settings.json` | Gemini CLI | El hook `BeforeTool` y la carga de `AGENTS.md` |
-| `.agents/hooks.json` | Antigravity | El hook `PreToolUse` |
+| `.agents/hooks/block-env.sh` and `block_env.py` | All of them, through their configuration | The blocking logic. They need uv |
+| `.claude/settings.json` | Claude Code (Copilot and Devin also read it) | The hook and `deny` read rules for the usual `.env` names |
+| `.cursor/hooks.json` | Cursor | The hook on `preToolUse`, `beforeReadFile` and `beforeShellExecution` |
+| `.codex/hooks.json` | Codex CLI | The hook. Mark the project as trusted and approve it with `/hooks` |
+| `.gemini/settings.json` | Gemini CLI | The `BeforeTool` hook and the loading of `AGENTS.md` |
+| `.agents/hooks.json` | Antigravity | The `PreToolUse` hook |
 
-Git ignora todos estos archivos excepto los scripts. Si el hook no encuentra los scripts, bloquea todas las llamadas a herramientas: revisa primero que la ruta de tu configuración sea la de la tabla. En Claude Code, la ruta usa `CLAUDE_PROJECT_DIR`, que el propio Claude Code define; si pruebas el comando a mano desde una subcarpeta, ejecútalo desde la raíz del repo.
+Git ignores all of these files except the scripts. If the hook can't find the scripts, it blocks every tool call: first check that your configuration's path matches the table. In Claude Code, the path uses `CLAUDE_PROJECT_DIR`, which Claude Code sets itself; if you test the command by hand from a subfolder, run it from the repo root.
 
-Los scripts están en el repo: [`.agents/hooks/block-env.sh`](../.agents/hooks/block-env.sh) y [`.agents/hooks/block_env.py`](../.agents/hooks/block_env.py). No hace falta copiarlos. Si cambias algo, hazlo en esos archivos.
+The scripts are in the repo: [`.agents/hooks/block-env.sh`](../.agents/hooks/block-env.sh) and [`.agents/hooks/block_env.py`](../.agents/hooks/block_env.py). You don't need to copy them. If you change something, change it in those files.
 
-| Agente | Configuración del hook | Estado |
+| Agent | Hook configuration | Status |
 |---|---|---|
-| Claude Code | `.claude/settings.json` (hook y reglas de denegación para los nombres habituales) | ✅ Probado con v2.1.326 |
-| Cursor | `.cursor/hooks.json` | 🧪 Sin probar |
-| Codex CLI | `.codex/hooks.json`. Marca el proyecto como de confianza y aprueba el hook con `/hooks`: **no se ejecuta hasta que lo hagas** | 🧪 Sin probar |
-| GitHub Copilot (VS Code) | Lee `.claude/settings.json`. Requiere una carpeta de confianza, y la configuración de tu organización puede desactivarlo | 🧪 Sin probar |
-| Gemini CLI | `.gemini/settings.json` | 🧪 Sin probar |
-| Antigravity | `.agents/hooks.json` | 🧪 Sin probar; su documentación no dice qué pasa si un hook falla |
-| Devin Desktop | Lee `.claude/settings.json` | 🧪 Sin probar |
+| Claude Code | `.claude/settings.json` (hook and deny rules for the usual names) | ✅ Tested with v2.1.326 |
+| Cursor | `.cursor/hooks.json` | 🧪 Untested |
+| Codex CLI | `.codex/hooks.json`. Mark the project as trusted and approve the hook with `/hooks`: **it doesn't run until you do** | 🧪 Untested |
+| GitHub Copilot (VS Code) | Reads `.claude/settings.json`. Requires a trusted folder, and your organization's configuration may disable it | 🧪 Untested |
+| Gemini CLI | `.gemini/settings.json` | 🧪 Untested |
+| Antigravity | `.agents/hooks.json` | 🧪 Untested; its documentation doesn't say what happens if a hook fails |
+| Devin Desktop | Reads `.claude/settings.json` | 🧪 Untested |
 
-«Sin probar» significa que la configuración sigue la documentación de la herramienta, pero no la hemos ejecutado en ella.
+"Untested" means the configuration follows the tool's documentation, but we haven't run it in that tool.
 
 > [!IMPORTANT]
-> Protege contra accidentes. No es un sandbox. Se le puede escapar una búsqueda en toda una carpeta (`grep -r CLAVE .`), un script que abra el archivo por su cuenta o un archivo que adjuntes o pegues tú en el chat. Los agentes sin soporte de hooks no están cubiertos.
+> It protects against accidents. It is not a sandbox. It can be bypassed by a search across a whole folder (`grep -r KEY .`), a script that opens the file on its own, or a file you attach or paste into the chat yourself. Agents without hook support are not covered.
 
 ## Claude Code 🟠
 
-[CLAUDE.md](../CLAUDE.md) solo importa `@AGENTS.md`.
+[CLAUDE.md](../CLAUDE.md) only imports `@AGENTS.md`.
 
-Claude Code busca las skills en `.claude/skills/`, así que crea enlaces simbólicos desde la raíz del repo. Los mismos comandos sirven para repararlos:
+Claude Code looks for skills in `.claude/skills/`, so create symbolic links from the repo root. The same commands also repair them:
 
 ```bash
 rm -rf .claude/skills/review-exercise .claude/skills/live-gaps
@@ -71,11 +71,11 @@ ln -s ../../.agents/skills/review-exercise .claude/skills/review-exercise
 ln -s ../../.agents/skills/live-gaps       .claude/skills/live-gaps
 ```
 
-Ejecuta `/skills` para comprobar que aparecen.
+Run `/skills` to check that they appear.
 
-¿No puedes usar enlaces simbólicos? Ejecuta `cp -r .agents/skills/review-exercise .agents/skills/live-gaps .claude/skills/` y vuelve a copiar después de cada cambio.
+Can't use symbolic links? Run `cp -r .agents/skills/review-exercise .agents/skills/live-gaps .claude/skills/` and copy again after every change.
 
-**Hook de `.env` (recomendado):** con los scripts de `.agents/hooks/` ya en su sitio (ver [el hook](#hook-de-protección-de-env-)), crea `.claude/settings.json`:
+**`.env` hook (recommended):** with the scripts in `.agents/hooks/` already in place (see [the hook](#env-protection-hook-)), create `.claude/settings.json`:
 
 ```json
 {
@@ -105,13 +105,13 @@ Ejecuta `/skills` para comprobar que aparecen.
 }
 ```
 
-Si no quieres el hook, puedes dejar solo el bloque `permissions`: no necesita los scripts, pero cubre menos casos.
+If you don't want the hook, you can keep only the `permissions` block: it doesn't need the scripts, but it covers fewer cases.
 
 ## Cursor 🎯
 
-Lee `.agents/skills/` directamente. Abre la raíz del repo y comprueba que el agente conoce `AGENTS.md`. Si también creaste los enlaces de `.claude/skills/`, puede que los vea; son los mismos archivos.
+Reads `.agents/skills/` directly. Open the repo root and check that the agent knows about `AGENTS.md`. If you also created the `.claude/skills/` links, it may see them too; they're the same files.
 
-**Hook de `.env` (recomendado):** con los scripts de `.agents/hooks/` ya en su sitio (ver [el hook](#hook-de-protección-de-env-)), crea `.cursor/hooks.json`:
+**`.env` hook (recommended):** with the scripts in `.agents/hooks/` already in place (see [the hook](#env-protection-hook-)), create `.cursor/hooks.json`:
 
 ```json
 {
@@ -132,9 +132,9 @@ Lee `.agents/skills/` directamente. Abre la raíz del repo y comprueba que el ag
 
 ## OpenAI Codex CLI 💻
 
-Lee `AGENTS.md` y `.agents/skills/` directamente. Inicia `codex` desde dentro del repo. La primera descarga del repo de LIDR necesita acceso a la red, así que apruébalo si el sandbox te lo pide.
+Reads `AGENTS.md` and `.agents/skills/` directly. Start `codex` from inside the repo. The first download of the LIDR repo needs network access, so approve it if the sandbox asks.
 
-**Hook de `.env` (recomendado):** con los scripts de `.agents/hooks/` ya en su sitio (ver [el hook](#hook-de-protección-de-env-)), crea `.codex/hooks.json`:
+**`.env` hook (recommended):** with the scripts in `.agents/hooks/` already in place (see [the hook](#env-protection-hook-)), create `.codex/hooks.json`:
 
 ```json
 {
@@ -154,23 +154,23 @@ Lee `AGENTS.md` y `.agents/skills/` directamente. Inicia `codex` desde dentro de
 }
 ```
 
-Después, marca el proyecto como de confianza y aprueba el hook con `/hooks`.
+Then mark the project as trusted and approve the hook with `/hooks`.
 
 ## GitHub Copilot 🐙
 
-VS Code lee `.agents/skills/`; usa el modo agente. No necesitas un `.github/copilot-instructions.md`. Si tu configuración ignora `AGENTS.md`, crea ese archivo con esta línea:
+VS Code reads `.agents/skills/`; use agent mode. You don't need a `.github/copilot-instructions.md`. If your configuration ignores `AGENTS.md`, create that file with this line:
 
 ```markdown
 Follow the instructions in AGENTS.md at the repository root.
 ```
 
-Para el hook de `.env`, crea `.claude/settings.json` como se indica en [Claude Code](#claude-code-). No necesitas los enlaces.
+For the `.env` hook, create `.claude/settings.json` as described in [Claude Code](#claude-code-). You don't need the links.
 
 ## Gemini CLI / Antigravity 💎
 
-Google reemplazó Gemini CLI por **Antigravity CLI** en junio de 2026. Antigravity lee `.agents/skills/` (ejecuta `/skills reload` después de añadir una).
+Google replaced Gemini CLI with **Antigravity CLI** in June 2026. Antigravity reads `.agents/skills/` (run `/skills reload` after adding one).
 
-¿Sigues usando Gemini CLI? También lee `.agents/skills/` y te pide permiso antes de activar una skill. Para que cargue `AGENTS.md` y use el [hook de `.env`](#hook-de-protección-de-env-) (recomendado; los scripts ya están en `.agents/hooks/`), crea `.gemini/settings.json`. Sin el hook, deja solo el bloque `context`:
+Still using Gemini CLI? It also reads `.agents/skills/` and asks your permission before activating a skill. To load `AGENTS.md` and use the [`.env` hook](#env-protection-hook-) (recommended; the scripts are already in `.agents/hooks/`), create `.gemini/settings.json`. Without the hook, keep only the `context` block:
 
 ```json
 {
@@ -194,7 +194,7 @@ Google reemplazó Gemini CLI por **Antigravity CLI** en junio de 2026. Antigravi
 }
 ```
 
-**Hook de `.env` en Antigravity (recomendado):** con los scripts de `.agents/hooks/` ya en su sitio (ver [el hook](#hook-de-protección-de-env-)), crea `.agents/hooks.json`:
+**`.env` hook in Antigravity (recommended):** with the scripts in `.agents/hooks/` already in place (see [the hook](#env-protection-hook-)), create `.agents/hooks.json`:
 
 ```json
 {
@@ -211,8 +211,8 @@ Google reemplazó Gemini CLI por **Antigravity CLI** en junio de 2026. Antigravi
 }
 ```
 
-## Windsurf (ahora Devin Desktop) y otros agentes 🌊
+## Windsurf (now Devin Desktop) and other agents 🌊
 
-La documentación de Devin indica que lee `AGENTS.md` y `.agents/skills/`. Para el hook de `.env`, crea `.claude/settings.json` como se indica en [Claude Code](#claude-code-). Con cualquier otro agente compatible con `AGENTS.md` que no admita skills, di:
+Devin's documentation says it reads `AGENTS.md` and `.agents/skills/`. For the `.env` hook, create `.claude/settings.json` as described in [Claude Code](#claude-code-). With any other agent that supports `AGENTS.md` but not skills, say:
 
-> Lee `.agents/skills/review-exercise/SKILL.md` y síguelo para la sesión 2.
+> Read `.agents/skills/review-exercise/SKILL.md` and follow it for session 2.

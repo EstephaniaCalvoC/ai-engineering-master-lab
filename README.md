@@ -1,63 +1,63 @@
 # ai-engineering-master-lab 🧪
 
 > [!WARNING]
-> **Este no es un repositorio oficial de LIDR.** Es un proyecto de la comunidad hecho por estudiantes y para estudiantes. LIDR no lo mantiene ni lo respalda, y el feedback de la IA **no es una calificación**. Las instrucciones, las fechas de entrega y la evaluación oficiales vienen siempre del programa.
+> **This is not an official LIDR repository.** It's a community project made by students and for students. LIDR doesn't maintain or endorse it, and the AI feedback **is not a grade**. Official instructions, due dates and grading always come from the program.
 
-🌱 Un punto de partida limpio para tus ejercicios semanales, más un tutor 🧑‍🏫 que vive dentro del agente de programación que ya usas.
+🌱 A clean starting point for your weekly exercises, plus a tutor 🧑‍🏫 that lives inside the coding agent you already use.
 
-## Índice 🗺
+## Index 🗺
 
-- 🤔 [¿Por qué existe?](#por-qué-existe-)
-  - 🔁 [El ciclo semanal](#el-ciclo-semanal-)
-- 🚀 [Inicio rápido](#inicio-rápido-)
-  1. 📥 [Consigue tu copia](#1-consigue-tu-copia-)
-  2. 🌿 [Crea la rama de la sesión](#2-crea-la-rama-de-la-sesión-)
-  3. 📝 [Añade el ejercicio](#3-añade-el-ejercicio-)
-  4. 🔨 [Constrúyelo, haz commit y pide la revisión](#4-constrúyelo-haz-commit-y-pide-la-revisión-)
-  5. 🎓 [Después de la clase en vivo](#5-después-de-la-clase-en-vivo-)
-  6. 🔀 [(Opcional) Haz merge de las mejoras](#6-opcional-haz-merge-de-las-mejoras-)
-- 🧠 [Cómo funcionan las skills](#cómo-funcionan-las-skills-)
-- 🔐 [Protección de `.env`](#protección-de-env-)
-- 🤖 [Configuración según tu agente](#configuración-según-tu-agente-)
+- 🤔 [Why does it exist?](#why-does-it-exist-)
+  - 🔁 [The weekly cycle](#the-weekly-cycle-)
+- 🚀 [Quick start](#quick-start-)
+  1. 📥 [Get your copy](#1-get-your-copy-)
+  2. 🌿 [Create the session branch](#2-create-the-session-branch-)
+  3. 📝 [Add the exercise](#3-add-the-exercise-)
+  4. 🔨 [Build it, commit, and request the review](#4-build-it-commit-and-request-the-review-)
+  5. 🎓 [After the live class](#5-after-the-live-class-)
+  6. 🔀 [(Optional) Merge the improvements](#6-optional-merge-the-improvements-)
+- 🧠 [How the skills work](#how-the-skills-work-)
+- 🔐 [`.env` protection](#env-protection-)
+- 🤖 [Agent-specific setup](#agent-specific-setup-)
 
-## ¿Por qué existe? 🤔
+## Why does it exist? 🤔
 
-Había dos cosas por mejorar:
+Two things needed fixing:
 
-- 🍝 **Hacer un fork del repo oficial no es empezar de cero.** Su `main` ya tiene el proyecto terminado, así que acabas peleándote con ramas huérfanas antes de escribir una línea de código.
-- 😕 **«Completado ✅» no es feedback.** Entregas un ejercicio y te enteras de que está aprobado, pero no de qué hiciste bien ni de qué deberías corregir.
+- 🍝 **Forking the official repo doesn't mean starting from scratch.** Its `main` already has the finished project, so you end up fighting orphan branches before writing a line of code.
+- 😕 **"Completed ✅" isn't feedback.** You submit an exercise and learn it's approved, but not what you did well or what to fix.
 
-Aquí, `main` no tiene código de la solución ni enunciados: solo documentación y dos skills.
+Here, `main` has no solution code or exercise prompts: only documentation and two skills.
 
-### El ciclo semanal 🔁
+### The weekly cycle 🔁
 
-| Fase | Qué haces tú | Qué hace el lab |
+| Phase | What you do | What the lab does |
 |---|---|---|
-| 📖 1. **Preparación** | Estudias y construyes el ejercicio previo a la sesión | `review-exercise` te da feedback detallado |
-| 🎥 2. **Sesión en vivo** | Clase de 2 h: conceptos, solución de referencia y preguntas | Nada. Disfrútala 🙂 |
-| 🔎 3. **Repaso posterior** | Comparas tu trabajo con lo construido en vivo | `live-gaps` muestra qué falta y por qué importa. Si quieres, también crea [`refine/session_XX`](.agents/TUTOR.md#qué-es-la-rama-refinesession_xx-) para cerrar esas brechas |
+| 📖 1. **Preparation** | You study and build the pre-session exercise | `review-exercise` gives you detailed feedback |
+| 🎥 2. **Live session** | 2-hour class: concepts, reference solution and questions | Nothing. Enjoy it 🙂 |
+| 🔎 3. **Post-session review** | You compare your work with what was built live | `live-gaps` shows what's missing and why it matters. If you want, it also creates [`refine/session_XX`](.agents/TUTOR.md#what-is-the-refinesession_xx-branch-) to close those gaps |
 
-## Inicio rápido 🚀
+## Quick start 🚀
 
-Necesitas un agente de programación para ejecutar las skills ([configúralo](#configuración-según-tu-agente-) después de clonar), además de Bash (en Windows, WSL o Git Bash) y [uv](https://docs.astral.sh/uv/). Los scripts del lab usan Python 3.11 a través de uv, que lo descarga si no lo tienes. Te recomendamos también activar el [hook de protección de `.env`](#protección-de-env-), que también necesita uv.
+You need a coding agent to run the skills ([set it up](#agent-specific-setup-) after cloning), plus Bash (on Windows, WSL or Git Bash) and [uv](https://docs.astral.sh/uv/). The lab scripts use Python 3.11 through uv, which downloads it if you don't have it. We also recommend enabling the [`.env` protection hook](#env-protection-), which also needs uv.
 
-### 1. Consigue tu copia 📥
+### 1. Get your copy 📥
 
-Haz clic en **Use this template** en GitHub (no hagas fork del repo de LIDR) y después:
+Click **Use this template** on GitHub (don't fork LIDR's repo), then:
 
 ```bash
-git clone https://github.com/<tu-usuario>/<tu-repo>.git
-cd <tu-repo>
+git clone https://github.com/<your-user>/<your-repo>.git
+cd <your-repo>
 ```
 
-### 2. Crea la rama de la sesión 🌿
+### 2. Create the session branch 🌿
 
-Crea una rama para el ejercicio de la sesión actual. Puedes partir del punto que prefieras:
+Create a branch for the current session's exercise. You can start from the point you prefer:
 
-- 🆕 **`main`:** empiezas desde cero.
-- ➡️ **`session_XX` (tu sesión anterior):** continúas desde tu ejercicio anterior.
-- ✨ **`refine/session_XX` (tu sesión anterior):** continúas desde su versión refinada.
-- 🎥 **Una rama en vivo de LIDR:** partes de la versión de la sesión en vivo del repo de LIDR. Las ramas de LIDR no incluyen los archivos del lab, así que recupéralos de tu `main`. Por ejemplo, para empezar la sesión 3 desde la clase en vivo de la sesión 2:
+- 🆕 **`main`:** start from scratch.
+- ➡️ **`session_XX` (your previous session):** continue from your previous exercise.
+- ✨ **`refine/session_XX` (your previous session):** continue from its refined version.
+- 🎥 **A LIDR live branch:** start from the live-session version in LIDR's repo. LIDR's branches don't include the lab files, so restore them from your `main`. For example, to start session 3 from the session 2 live class:
 
 ```bash
 git fetch https://github.com/LIDR-academy-temp/ai-engineering.git session_2_live
@@ -66,55 +66,55 @@ git checkout main -- .agents manuals README.md AGENTS.md CLAUDE.md .gitignore
 git commit -m "chore: add lab files"
 ```
 
-  Esto reemplaza el `README.md`, el `CLAUDE.md` y el `.gitignore` raíz de LIDR por los del lab. Después, mueve con `git mv` el código de LIDR del que vayas a partir a [`project/`](#dónde-va-tu-trabajo-). Los nombres de las ramas de LIDR varían (`session_2_live`, `session_05_live`), así que confirma el nombre exacto en su repo. Las skills detectan este punto de partida y no cuentan el código de LIDR como trabajo tuyo.
+  This replaces LIDR's root `README.md`, `CLAUDE.md` and `.gitignore` with the lab's. Then move the LIDR code you'll start from into [`project/`](#where-your-work-goes-) with `git mv`. LIDR's branch names vary (`session_2_live`, `session_05_live`), so confirm the exact name in their repo. The skills detect this starting point and don't count LIDR's code as your work.
 
-#### Dónde va tu trabajo 📁
+#### Where your work goes 📁
 
-Todo tu trabajo va dentro de **`project/`**: es un solo producto que crece sesión a sesión. La carpeta ya existe en `main`, con un `.gitkeep`. Trabaja dentro de ella en tu rama de sesión.
+All your work goes inside **`project/`**: it's one product that grows session by session. The folder already exists on `main`, with a `.gitkeep`. Work inside it on your session branch.
 
 ```text
-project/          tu trabajo
-  README.md       cómo ejecutarlo y probarlo
-  .gitignore      reglas de tu proyecto
-  backlog.md      tus notas, si las tienes
-  mi-app/         tu código, tests y manifiesto de dependencias
+project/          your work
+  README.md       how to run and test it
+  .gitignore      your project's rules
+  backlog.md      your notes, if you have any
+  my-app/         your code, tests and dependency manifest
 ```
 
-- Documenta en `project/` cómo ejecutar la app y sus tests.
-- La excepción es **`.github/`**: GitHub solo lee los workflows desde la raíz del repo, y también cuenta como trabajo tuyo.
-- El `README.md`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` y los archivos `sXX_exercise.txt` de la raíz son del lab. La revisión no los evalúa, aunque los edites.
-- Si hay otros archivos nuevos o modificados fuera de esas carpetas, el agente te pregunta si son parte de tu trabajo.
-- ¿Tienes una rama anterior sin `project/`? El agente te explica esta estructura y te pregunta antes de revisarla donde está.
+- Document in `project/` how to run the app and its tests.
+- The exception is **`.github/`**: GitHub only reads workflows from the repo root, and it also counts as your work.
+- The root `README.md`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` and `sXX_exercise.txt` files belong to the lab. The review doesn't grade them, even if you edit them.
+- If there are other new or changed files outside those folders, the agent asks whether they're part of your work.
+- Got an earlier branch without `project/`? The agent explains this structure and asks before reviewing it where it is.
 
-### 3. Añade el ejercicio 📝
+### 3. Add the exercise 📝
 
-En la rama de la sesión, guarda el enunciado en la raíz del repo como `sXX_exercise.txt`, con dos dígitos (por ejemplo, `s03_exercise.txt`), y haz commit. No hace falta que esté en `main`. Incluye el checklist de verificación y la nota sobre la sesión en vivo, si la hay: la revisión los usa para decidir qué evaluar.
+On the session branch, save the exercise prompt in the repo root as `sXX_exercise.txt`, with two digits (for example, `s03_exercise.txt`), and commit it. It doesn't need to be on `main`. Include the verification checklist and the note about the live session, if there is one: the review uses them to decide what to evaluate.
 
-Puedes saltarte este paso: si falta el archivo, `review-exercise` te pide el enunciado, lo crea y te pregunta si quieres hacer commit.
+You can skip this step: if the file is missing, `review-exercise` asks you for the prompt, creates the file, and asks whether you want to commit it.
 
-### 4. Constrúyelo, haz commit y pide la revisión 🔨
+### 4. Build it, commit, and request the review 🔨
 
-Haz el ejercicio por tu cuenta dentro de [`project/`](#dónde-va-tu-trabajo-) y luego haz commit (la revisión solo lee el trabajo **commiteado**).
+Do the exercise yourself inside [`project/`](#where-your-work-goes-), then commit (the review only reads **committed** work).
 
-En tu agente:
+In your agent:
 
 ```text
 /review-exercise session_02
 ```
 
-o simplemente di *«revisa mi ejercicio de la sesión 2»*. Consulta la [tabla de configuración](#configuración-según-tu-agente-).
+or just say *"review my session 2 exercise"*. See the [configuration table](#agent-specific-setup-).
 
-### 5. Después de la clase en vivo 🎓
+### 5. After the live class 🎓
 
 ```text
 /live-gaps session_02
 ```
 
-Recibirás un informe y el agente te preguntará si quieres cerrar las brechas en `refine/session_02`. No se cambia nada a menos que digas que sí. Si aceptas, revisa el diff y haz commit en esa rama.
+You'll get a report, and the agent will ask whether you want to close the gaps on `refine/session_02`. Nothing changes unless you say yes. If you accept, review the diff and commit on that branch.
 
-### 6. (Opcional) Haz merge de las mejoras 🔀
+### 6. (Optional) Merge the improvements 🔀
 
-Tu siguiente sesión puede partir directamente de `refine/session_02`, así que el merge es opcional. Si quieres que `session_02` las incluya (dejará de ser tu entrega original, así que primero ponle un tag):
+Your next session can start directly from `refine/session_02`, so merging is optional. If you want `session_02` to include them (it will stop being your original submission, so tag it first):
 
 ```bash
 git switch session_02
@@ -122,20 +122,20 @@ git tag submission/session_02
 git merge --no-ff refine/session_02
 ```
 
-Mantén el código del proyecto **fuera de `main`**.
+Keep the project code **out of `main`**.
 
-## Cómo funcionan las skills 🧠
+## How the skills work 🧠
 
-El tutor son dos skills: `review-exercise` revisa tu ejercicio antes de la sesión en vivo y `live-gaps` lo compara después con lo construido en clase. En [la guía del tutor](.agents/TUTOR.md) tienes cómo funciona cada una, qué se valora, los informes que generan, la rama `refine/session_XX` y cómo adaptarlo a tu gusto.
+The tutor is two skills: `review-exercise` reviews your exercise before the live session, and `live-gaps` compares it afterwards with what was built in class. [The tutor guide](.agents/TUTOR.md) explains how each one works, what it values, the reports it generates, the `refine/session_XX` branch, and how to adapt it to your taste.
 
-## Protección de `.env` 🔐
+## `.env` protection 🔐
 
-**Te recomendamos activar el hook** que impide a tu agente abrir o tocar archivos `.env`, para que tus claves de API no acaben en el chat ni en el proveedor del modelo. Los scripts vienen en [`.agents/hooks/`](.agents/hooks/), pero cada agente necesita su propia configuración local: sigue [cómo activarlo](manuals/agent-setup.md#hook-de-protección-de-env-) en la guía de configuración. **Sin esa configuración, nada del lab impide que tu agente lea `.env`.**
+**We recommend enabling the hook** that stops your agent from opening or touching `.env` files, so your API keys don't end up in the chat or with the model provider. The scripts are in [`.agents/hooks/`](.agents/hooks/), but each agent needs its own local configuration: follow [how to enable it](manuals/agent-setup.md#env-protection-hook-) in the setup guide. **Without that configuration, nothing in the lab stops your agent from reading `.env`.**
 
-Con o sin hook, haz tú los pasos como `cp .env.example .env` y rellenar tus claves.
+With or without the hook, do the steps like `cp .env.example .env` and fill in your keys yourself.
 
-## Configuración según tu agente 🤖
+## Agent-specific setup 🤖
 
-Cada agente se configura una vez en cada clon: en algunos, el acceso a las skills y, como recomendación, el hook de `.env`. Sigue [la guía de configuración de agentes](manuals/agent-setup.md), que también explica cómo ejecutar las skills en cada uno.
+Each agent is configured once per clone: for some, access to the skills and, as a recommendation, the `.env` hook. Follow [the agent setup guide](manuals/agent-setup.md), which also explains how to run the skills in each agent.
 
-¡A construir! 🚀
+Happy building! 🚀

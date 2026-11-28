@@ -6,33 +6,33 @@
     "branch": "session_03",
     "sha": "def5678",
     "project_dir": null,
-    "note": "solo trabajo confirmado"
+    "note": "committed work only"
   },
   "exercise_path": "s03_exercise.txt",
   "rubric_file": "reports/s03_rubric_20260101-1000.json",
   "reference": {
     "ref": "session_3",
     "sha": "abc1234",
-    "note": "solución pre-sesión; solo para comparar"
+    "note": "pre-session solution; for comparison only"
   },
   "context": {
     "notes": []
   },
   "verdict": "almost_ready",
   "verdict_notes": [
-    "El veredicto depende de un punto sin verificar: el resultado de una petición válida."
+    "The verdict depends on one unverified point: the result of a valid request."
   ],
   "strengths": [
     {
-      "decision": "Claves solo por variable de entorno",
+      "decision": "Keys only from environment variables",
       "location": "app/config.py:12",
-      "why": "La clave nunca se escribe en el código, y la validación rechaza pegarla en el campo equivocado."
+      "why": "The key is never written in code, and validation rejects pasting it into the wrong field."
     }
   ],
   "verification": [
     {
       "item_id": "R01",
-      "label": "El endpoint principal responde a una petición válida",
+      "label": "The main endpoint answers a valid request",
       "status": "MET",
       "source": "test",
       "test_names": ["test_main_endpoint_returns_200"],
@@ -44,19 +44,19 @@
     },
     {
       "item_id": "R02",
-      "label": "Las respuestas vacías del modelo se detectan y se reportan",
+      "label": "Empty model replies are detected and reported",
       "status": "NOT_MET",
       "source": "test",
       "test_names": ["test_empty_reply_is_rejected"],
       "evidence": [],
-      "notes": "El test falla: la cadena vacía pasa sin error.",
+      "notes": "The test fails: the empty string passes without an error.",
       "reason": null,
       "question": null,
       "student_answer": null
     },
     {
       "item_id": "R03",
-      "label": "Las claves vienen de la configuración, no del código",
+      "label": "Keys come from configuration, not from code",
       "status": "MET",
       "source": "code",
       "test_names": [],
@@ -68,31 +68,31 @@
     },
     {
       "item_id": "R04",
-      "label": "La lógica de negocio está separada de la capa de rutas",
+      "label": "Business logic is separated from the routes layer",
       "status": "PARTIAL",
       "source": "code",
       "test_names": [],
       "evidence": ["app/routers/items.py:20"],
-      "notes": "Un caso llama directamente al cliente del modelo desde la ruta.",
+      "notes": "One case calls the model client directly from the route.",
       "reason": null,
       "question": null,
       "student_answer": null
     },
     {
       "item_id": "R05",
-      "label": "Una petición válida produce el resultado que pide el ejercicio",
+      "label": "A valid request produces the result the exercise asks for",
       "status": "NOT_VERIFIED",
       "source": "none",
       "test_names": [],
       "evidence": [],
       "notes": "",
-      "reason": "Los tests usan un doble del modelo y comprobar una llamada real requiere una API key.",
-      "question": "Con tu API key configurada, ¿una petición válida devuelve el resultado en el formato que pide el ejercicio?",
+      "reason": "The tests use a model double, and checking a real call requires an API key.",
+      "question": "With your API key configured, does a valid request return the result in the format the exercise asks for?",
       "student_answer": null
     }
   ],
   "optional_notes": [
-    "Streaming (opcional, no penalizado)"
+    "Streaming (optional, not penalized)"
   ],
   "test_run": {
     "ran": true,
@@ -111,35 +111,35 @@
   "findings": [
     {
       "id": "C1",
-      "title": "La respuesta vacía del modelo no se rechaza",
+      "title": "The empty model reply is not rejected",
       "location": "tests/unit/test_client.py:30",
-      "what_happens": "El test `test_empty_reply_is_rejected` falla: se esperaba un error ante una respuesta vacía y no se lanzó ninguno.",
-      "why_matters": "El requisito pide detectar las respuestas vacías y reportarlas con su causa real.",
-      "hint": "¿Qué debería pasar en tu código cuando la respuesta llega vacía? Si quieres, podemos investigar juntos la causa.",
+      "what_happens": "The test `test_empty_reply_is_rejected` fails: an error was expected for an empty reply and none was raised.",
+      "why_matters": "The requirement asks to detect empty replies and report them with their real cause.",
+      "hint": "What should your code do when the reply comes back empty? If you want, we can look into the cause together.",
       "rubric_item_ids": ["R02"]
     },
     {
       "id": "I1",
-      "title": "La ruta llama directamente al cliente del modelo",
+      "title": "The route calls the model client directly",
       "location": "app/routers/items.py:20",
-      "what_happens": "Un caso de la ruta usa el SDK sin pasar por el servicio.",
-      "why_matters": "Cualquier cambio de proveedor obliga a tocar la capa de rutas.",
-      "hint": "¿Qué parte de la lógica debería vivir en el servicio?",
+      "what_happens": "One route case uses the SDK without going through the service.",
+      "why_matters": "Any change of provider forces changes in the routes layer.",
+      "hint": "Which part of the logic should live in the service?",
       "rubric_item_ids": ["R04"]
     },
     {
       "id": "D1",
-      "title": "Nombre de variable poco descriptivo",
+      "title": "Variable name is not descriptive",
       "location": "app/llm/client.py:12",
-      "what_happens": "La variable se llama `x` y su significado solo se entiende leyendo el bloque completo.",
-      "why_matters": "No afecta al funcionamiento; solo a la lectura.",
-      "hint": "¿Qué nombre describiría mejor su contenido?",
+      "what_happens": "The variable is called `x`, and its meaning is only clear after reading the whole block.",
+      "why_matters": "It doesn't affect how the code works, only how easy it is to read.",
+      "hint": "What name would describe its content better?",
       "rubric_item_ids": []
     }
   ],
   "reflection": {
-    "conclusion": "Buen trabajo con la configuración y la seguridad. El fallo principal es la validación de respuestas vacías.",
-    "question": "¿Qué test fallaría si alguien eliminara la comprobación de la cadena vacía?",
-    "live_session": ["Ajuste del prompt y parámetros del modelo"]
+    "conclusion": "Good work on configuration and security. The main issue is the validation of empty replies.",
+    "question": "Which test would fail if someone removed the check for the empty string?",
+    "live_session": ["Prompt and model parameter tuning"]
   }
 }

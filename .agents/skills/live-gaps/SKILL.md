@@ -1,6 +1,6 @@
 ---
 name: live-gaps
-description: Post-live-session gaps report for the LIDR AI Engineering Master, comparing the student's session branch with LIDR's live-session implementation, then optionally closing gaps on refine/session_XX. Use when the student runs "/live-gaps session_XX" or "/live-gaps XX", or asks what they are missing or what changed in the live class (in any language, e.g. "qué me falta respecto a la sesión en vivo").
+description: Post-live-session gaps report for the LIDR AI Engineering Master, comparing the student's session branch with LIDR's live-session implementation, then optionally closing gaps on refine/session_XX. Use when the student runs "/live-gaps session_XX" or "/live-gaps XX", or asks what they are missing or what changed in the live class (in any language, e.g. "what am I missing from the live session").
 ---
 
 # Live-session gaps
@@ -21,7 +21,7 @@ bash .agents/scripts/lab.sh local <session>
 - `UNCOMMITTED_PATHS` > 0: warn that only committed work is compared.
 - The exercise file is optional here. Use it as context for what was asked before the class. If several differ, ask which is current.
 
-**Language:** write the report and all conversation with the student in **Spanish**. Keep code, identifiers, file names and commands unchanged.
+**Language:** write the report and all conversation with the student in **English**. Keep code, identifiers, file names and commands unchanged.
 
 ## 2. Fetch the live-session implementation
 
@@ -44,11 +44,11 @@ If `lab.sh upstream` printed `STARTED_FROM_LIDR=<branch> <sha>`, the branch was 
 3. For each live-session change, decide whether the student already has it (possibly in another form), has part of it, or lacks it. Equivalent solutions are not gaps. Credit what they did ahead of time, or did better.
 4. Also note anything missing from earlier sessions that this live work depends on, labelled as carried over.
 5. Group related changes into gaps with IDs `G1`, `G2`, … in one of three categories:
-   - **Funcionalidades nuevas y patrones de arquitectura**
-   - **Diferencias de implementación y calidad del código**
-   - **Brechas conceptuales** to understand before the next session
+   - **New features and architecture patterns**
+   - **Implementation differences and code quality**
+   - **Conceptual gaps** to understand before the next session
 
-Give each gap a priority: **Bloqueante** (the next session builds on it), **Recomendada** or **Opcional**. Out-of-scope extras such as another app, deployment or large generated files can be summarized in one entry.
+Give each gap a priority: **Blocker** (the next session builds on it), **Recommended** or **Optional**. Out-of-scope extras such as another app, deployment or large generated files can be summarized in one entry.
 
 If the live diff is very large, cover the central application code in depth, and list what you only skimmed or skipped.
 

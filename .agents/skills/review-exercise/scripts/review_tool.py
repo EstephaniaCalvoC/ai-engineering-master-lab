@@ -7,9 +7,9 @@
   review_tool.py render    --rubric FILE --review FILE --out FILE [--overwrite]
 
 check      validates the rubric and, when given, the verification file against it.
-questions  writes the Spanish list of unverified items and their yes/no questions.
+questions  writes the list of unverified items and their yes/no questions.
 answer     records the student's answers in the verification file and the questions file.
-render     runs the same checks, then writes the Spanish report.
+render     runs the same checks, then writes the report.
 
 Exit codes: 0 ok, 1 validation errors, 2 unreadable input or unusable output path.
 """
@@ -27,7 +27,7 @@ from pathlib import Path
 
 SCHEMA_VERSION = 1
 
-# Vocabulary. The JSON uses these English tags; the Spanish text lives in the renderer.
+# Vocabulary. The JSON uses these tags; the display text lives in the renderer.
 KINDS = ("checklist", "optional", "deferred")
 ITEM_TYPES = (
     "Mandatory requirement",
@@ -434,30 +434,30 @@ def validate(rubric_path, review_path=None):
 # ---------------------------------------------------------------- rendering
 
 STATUS_LEGEND = [
-    "- ✅: Cumplido, o test que pasa. Solo si la evidencia lo confirma",
-    "- ⚠️: Cumplido parcialmente",
-    "- ❌: No cumplido, o test que falla",
-    "- 🔍: No verificado: ni un test ni el código permiten comprobarlo (por ejemplo, requiere la app en "
-    "ejecución, una API key o un navegador) y no hubo un sí o un no como respuesta",
-    "- «Confirmado por el estudiante»: el estado se basa en tu respuesta, no en un test ni en el código",
+    "- ✅: Met, or a passing test. Only when the evidence confirms it",
+    "- ⚠️: Partially met",
+    "- ❌: Not met, or a failing test",
+    "- 🔍: Not verified: neither a test nor the code can check it (for example, it needs the running app, "
+    "an API key or a browser), and there was no yes or no answer",
+    "- “Confirmed by the student”: the status is based on your answer, not on a test or the code",
 ]
 
 STATUS_EMOJI = {"MET": "✅", "PARTIAL": "⚠️", "NOT_MET": "❌", "NOT_VERIFIED": "🔍"}
-VERDICT_ES = {
-    "ready": ("🚀", "¡Lo hiciste genial!", "El proyecto no tiene puntos críticos y cumple los requisitos obligatorios."),
-    "almost_ready": ("💪", "¡Casi lo tienes!", "El proyecto necesita arreglos pequeños y bien definidos."),
-    "needs_work": ("🚧", "Necesita trabajo.", "El proyecto tiene problemas que requieren más que pequeños arreglos."),
+VERDICT_TEXT = {
+    "ready": ("🚀", "Great job!", "The project has no critical issues and meets the mandatory requirements."),
+    "almost_ready": ("💪", "Almost there!", "The project needs small, well-defined fixes."),
+    "needs_work": ("🚧", "Needs work.", "The project has problems that need more than small fixes."),
 }
-SOURCE_ES = {"code": "«Leer el código»", "student": "«Confirmado por el estudiante»", "none": "—"}
-ANSWER_ES = {None: "Pendiente", "yes": "Sí", "no": "No", "skip": "Sin respuesta"}
-UNVERIFIED_NOTE = ("> 🔍 **Aclara los puntos no verificados:** revisa cada ítem marcado con 🔍. Compruébalo antes de la "
-                   "sesión en vivo y, si no sabes cómo hacerlo, pregúntale a tu tutor.")
-CRIT_INTRO = ("Todos los hallazgos de esta sección se refieren a código no funcional, requisitos "
-              "obligatorios no cumplidos o riesgo de seguridad.")
-IMP_INTRO = ("Todos los hallazgos de esta sección se refieren a problemas de escalabilidad, diseño, "
-             "arquitectura o mal uso del stack.")
-DES_INTRO = ("Estos hallazgos solo se refieren a cuestiones cosméticas, de pulido o pequeños detalles "
-             "sin impacto en el funcionamiento ni en la escalabilidad.")
+SOURCE_TEXT = {"code": "“Reading the code”", "student": "“Confirmed by the student”", "none": "—"}
+ANSWER_TEXT = {None: "Pending", "yes": "Yes", "no": "No", "skip": "No answer"}
+UNVERIFIED_NOTE = ("> 🔍 **Clarify the unverified points:** check each item marked 🔍 before the live session. "
+                   "If you don't know how, ask your tutor.")
+CRIT_INTRO = ("All findings in this section are about non-working code, unmet mandatory requirements "
+              "or security risk.")
+IMP_INTRO = ("All findings in this section are about scalability, design, architecture "
+             "or poor use of the stack.")
+DES_INTRO = ("These findings are only about cosmetic or polish issues and small details with no impact "
+             "on how the code works or scales.")
 
 
 def slug(text):
@@ -473,17 +473,17 @@ def _cell(text):
 def _finding_block(f):
     return [
         f"### {f.id}. {f.title}",
-        f"- **Dónde:** `{f.location}`",
-        f"- **Qué pasa:** {f.what_happens}",
-        f"- **Por qué importa:** {f.why_matters}",
-        f"- **Pista:** {f.hint}",
+        f"- **Where:** `{f.location}`",
+        f"- **What happens:** {f.what_happens}",
+        f"- **Why it matters:** {f.why_matters}",
+        f"- **Hint:** {f.hint}",
     ]
 
 
 def _validation(row):
     if row.source == "test":
         return "Test: " + ", ".join(f"`{n}`" for n in row.test_names)
-    return SOURCE_ES[row.source]
+    return SOURCE_TEXT[row.source]
 
 
 def render(review, rubric):
@@ -496,24 +496,24 @@ def render(review, rubric):
     rv = review.reviewed
 
     # Header. The review metadata goes in the closing context section.
-    head = [f"# Sesión {review.session} — Revisión del ejercicio", ""]
-    notes = [p for p in (rv.note, f"el proyecto está en `{rv.project_dir}/`" if rv.project_dir else None) if p]
+    head = [f"# Session {review.session} — Exercise review", ""]
+    notes = [p for p in (rv.note, f"the project is in `{rv.project_dir}/`" if rv.project_dir else None) if p]
     if review.reference:
         ref = review.reference
         ref_text = f"`{ref.ref}` @ `{ref.sha}`" + (f" ({ref.note})" if ref.note else "")
     else:
-        ref_text = "«ninguna»"
+        ref_text = "none"
 
     # Sections: (title, body lines), in report order.
     sections = []
 
-    emoji, label, meaning = VERDICT_ES[review.verdict]
+    emoji, label, meaning = VERDICT_TEXT[review.verdict]
     summary = [f"**{emoji} {label}** {meaning}", ""]
     for note in review.verdict_notes:
-        summary += [f"**Nota:** {note}", ""]
-    summary += ["### Lo que hiciste bien"]
-    summary += [f"- **{s.decision}** (`{s.location}`): {s.why}" for s in review.strengths] or ["- Ninguno."]
-    sections.append(("Veredicto", summary))
+        summary += [f"**Note:** {note}", ""]
+    summary += ["### What you did well"]
+    summary += [f"- **{s.decision}** (`{s.location}`): {s.why}" for s in review.strengths] or ["- None."]
+    sections.append(("Verdict", summary))
 
     def finding_section(title, intro, findings, empty_text):
         if not findings:
@@ -523,19 +523,19 @@ def render(review, rubric):
             body += [""] + _finding_block(f)
         return (title, body)
 
-    sections.append(finding_section("Hallazgos críticos", CRIT_INTRO, crit, "No se encontró ningún hallazgo crítico."))
-    sections.append(finding_section("Hallazgos importantes", IMP_INTRO, imp, "No se encontró ninguno."))
-    sections.append(finding_section("Hallazgos deseables", DES_INTRO, des, "No se encontró ninguno."))
+    sections.append(finding_section("Critical findings", CRIT_INTRO, crit, "No critical findings found."))
+    sections.append(finding_section("Important findings", IMP_INTRO, imp, "None found."))
+    sections.append(finding_section("Nice-to-have findings", DES_INTRO, des, "None found."))
 
     refl = review.reflection
-    sections.append(("Conclusiones y preguntas para reflexionar", [
-        f"- **Conclusión:** {refl.conclusion}",
-        f"- **Pregunta:** {refl.question}",
-        f"- **Lo que viene en la sesión en vivo (no se evalúa):** {'; '.join(refl.live_session) or 'ninguno'}",
+    sections.append(("Conclusions and questions to reflect on", [
+        f"- **Conclusion:** {refl.conclusion}",
+        f"- **Question:** {refl.question}",
+        f"- **Coming in the live session (not assessed):** {'; '.join(refl.live_session) or 'none'}",
     ]))
 
-    detail = ["", "### Rúbrica", *STATUS_LEGEND, "",
-              "| Ítem | Estado | Comentarios | Método de validación |", "|---|---|---|---|"]
+    detail = ["", "### Rubric", *STATUS_LEGEND, "",
+              "| Item | Status | Comments | Validation method |", "|---|---|---|---|"]
     for r in rows:
         status = STATUS_EMOJI[r.status]
         comments = " ".join(x for x in ((r.reason if r.status == "NOT_VERIFIED" else None), r.notes) if x)
@@ -543,47 +543,47 @@ def render(review, rubric):
     if any(r.status == "NOT_VERIFIED" for r in rows):
         detail += ["", UNVERIFIED_NOTE]
     if review.optional_notes:
-        detail += ["", "Ítems opcionales o diferidos (listados, no penalizados): " + "; ".join(review.optional_notes) + "."]
+        detail += ["", "Optional or deferred items (listed, not penalized): " + "; ".join(review.optional_notes) + "."]
 
-    detail += ["", "### Ejecución de tests"]
+    detail += ["", "### Test run"]
     if tr.ran:
-        detail.append(f"- **Comando:** `{tr.command}`")
-        detail.append(f"- **Resultado:** {tr.passed} pasados, {tr.failed} fallidos, {tr.skipped} omitidos")
+        detail.append(f"- **Command:** `{tr.command}`")
+        detail.append(f"- **Result:** {tr.passed} passed, {tr.failed} failed, {tr.skipped} skipped")
         if tr.failures:
-            detail.append("- **Fallos:**")
+            detail.append("- **Failures:**")
             detail += [f"  - `{f.test}`: {f.error}" for f in tr.failures]
-            detail.append("- **Causa de los fallos:** no se investigó. Si quieres profundizar en alguno, pídeselo a tu tutor.")
+            detail.append("- **Cause of the failures:** not investigated. If you want to dig into one, ask your tutor.")
         else:
-            detail.append("- **Fallos:** ninguno")
+            detail.append("- **Failures:** none")
     else:
-        detail.append(f"- **Resultado:** no se ejecutaron: {tr.reason}")
+        detail.append(f"- **Result:** not run: {tr.reason}")
     unverified = [r for r in rows if r.status == "NOT_VERIFIED"]
     if unverified:
-        detail.append("- **No verificado:**")
+        detail.append("- **Not verified:**")
         detail += [f"  - {r.label}: {r.reason}" for r in unverified]
     else:
-        detail.append("- **No verificado:** ninguno")
-    sections.append(("Evaluación detallada", detail))
+        detail.append("- **Not verified:** none")
+    sections.append(("Detailed evaluation", detail))
 
     if not tr.ran:
         not_run = tr.reason
     elif tr.skipped:
-        not_run = "1 test omitido" if tr.skipped == 1 else f"{tr.skipped} tests omitidos"
+        not_run = "1 test skipped" if tr.skipped == 1 else f"{tr.skipped} tests skipped"
     else:
-        not_run = "Ninguno"
+        not_run = "None"
     ctx = [
-        f"- **Revisado:** `{rv.branch}` @ `{rv.sha}`" + (f" ({'; '.join(notes)})" if notes else ""),
-        f"- **Ejercicio:** `{review.exercise_path}`",
-        f"- **Referencia de LIDR:** {ref_text}",
-        f"- **Rúbrica:** `{review.rubric_file}`",
-        f"- **Fecha:** {review.date}",
-        f"- **Tests que no se ejecutaron:** {not_run}",
+        f"- **Reviewed:** `{rv.branch}` @ `{rv.sha}`" + (f" ({'; '.join(notes)})" if notes else ""),
+        f"- **Exercise:** `{review.exercise_path}`",
+        f"- **LIDR reference:** {ref_text}",
+        f"- **Rubric:** `{review.rubric_file}`",
+        f"- **Date:** {review.date}",
+        f"- **Tests not run:** {not_run}",
     ]
     ctx += [f"- {note}" for note in review.context.notes]
-    sections.append(("Contexto de la revisión", ctx))
+    sections.append(("Review context", ctx))
 
     # Index, built from the sections actually written.
-    toc = ["## Índice"]
+    toc = ["## Index"]
     for n, (title, _) in enumerate(sections, 1):
         toc.append(f"{n}. [{title}](#{slug(title)})")
     toc.append("")
@@ -598,13 +598,13 @@ def render_questions(review, rubric):
     order = {item.id: n for n, item in enumerate(rubric.items)}
     rows = sorted((r for r in review.verification if r.status == "NOT_VERIFIED" or r.source == "student"),
                   key=lambda r: order[r.item_id])
-    out = [f"# Sesión {review.session} — Puntos por verificar", "",
-           "Ni un test ni el código permitieron comprobar estos puntos. Cada pregunta se responde con Sí o No."]
+    out = [f"# Session {review.session} — Points to verify", "",
+           "Neither a test nor the code could verify these points. Answer each question with Yes or No."]
     for r in rows:
         out += ["", f"## {r.item_id}. {r.label}",
-                f"- **Por qué no se pudo verificar:** {r.reason}",
-                f"- **Pregunta:** {r.question}",
-                f"- **Respuesta:** {ANSWER_ES[r.student_answer]}"]
+                f"- **Why it could not be verified:** {r.reason}",
+                f"- **Question:** {r.question}",
+                f"- **Answer:** {ANSWER_TEXT[r.student_answer]}"]
     return "\n".join(out) + "\n"
 
 
@@ -734,7 +734,7 @@ def main(argv=None):
     p_answer.add_argument("--set", action="append", required=True, metavar="ID=yes|no|skip")
     p_answer.set_defaults(func=cmd_answer)
 
-    p_render = sub.add_parser("render", help="validate, then write the Spanish report")
+    p_render = sub.add_parser("render", help="validate, then write the report")
     p_render.add_argument("--rubric", required=True)
     p_render.add_argument("--review", required=True)
     p_render.add_argument("--out", required=True)

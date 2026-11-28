@@ -10,7 +10,7 @@ Run them only if all of these are true:
 - **Documented:** the project's README, its manifest or scripts (`Makefile`, `package.json`), or the exercise file says how to run the tests. Don't make up a command.
 - **Safe without secrets:** the documented command works without real API keys or paid calls. Use the offline or unit subset if the instructions have one. Never turn on opt-in integration tests (e.g. `--run-integration`). If only paid tests exist, don't run them.
 
-If one is false, don't run anything. Record the reason in the report. Missing tests or instructions are a finding only if the exercise asks for them. Otherwise they are Deseable at most.
+If one is false, don't run anything. Record the reason in the report. Missing tests or instructions are a finding only if the exercise asks for them. Otherwise they are Nice to have at most.
 
 **No documented command:** don't look for one elsewhere, don't guess one, and don't try one to see if it works. The `Test` items it would have covered become `NOT_VERIFIED` (`source` `none`), unless the code proves a defect (step 5 of `SKILL.md`).
 

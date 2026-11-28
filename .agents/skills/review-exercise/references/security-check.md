@@ -16,7 +16,7 @@ The scan covers the whole branch, including lab files.
 bash .agents/scripts/lab.sh secrets <session>
 ```
 
-It reports tracked or previously committed secret files (`TRACKED_SECRET_FILE`, `SECRET_FILE_IN_HISTORY`) and likely hardcoded keys (`POSSIBLE_KEY`, as `branch:file:line`, with masked context). Never open `.env` or secret files and never print secret values. A hook blocks `.env` access: don't work around it. A committed secret is **Crítico**: tell the student to revoke it, since deleting the file leaves it in history.
+It reports tracked or previously committed secret files (`TRACKED_SECRET_FILE`, `SECRET_FILE_IN_HISTORY`) and likely hardcoded keys (`POSSIBLE_KEY`, as `branch:file:line`, with masked context). Never open `.env` or secret files and never print secret values. A hook blocks `.env` access: don't work around it. A committed secret is **Critical**: tell the student to revoke it, since deleting the file leaves it in history.
 
 ## 3. Triage each `POSSIBLE_KEY` hit
 
@@ -24,7 +24,7 @@ Use the script's output and the file path only. Never open or print a flagged li
 
 - **Part of a URL** (`inside_word=yes`, `in_url=yes` and `longest_run` under 16) → false positive.
 - **Placeholder** (`placeholder_word=yes` and `longest_run` under 16, in a test, example or documentation file) → false positive.
-- **Anything else** → an Importante finding, never Crítico, since it can't be ruled out or confirmed. Say that it's a possible key that wasn't confirmed, and tell the student to check the line and, if the key is real, to revoke it, since deleting it leaves it in history.
+- **Anything else** → an Important finding, never Critical, since it can't be ruled out or confirmed. Say that it's a possible key that wasn't confirmed, and tell the student to check the line and, if the key is real, to revoke it, since deleting it leaves it in history.
 
 These rules apply to `POSSIBLE_KEY` only, not to `TRACKED_SECRET_FILE` or `SECRET_FILE_IN_HISTORY`.
 
